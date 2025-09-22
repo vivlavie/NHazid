@@ -1,0 +1,119 @@
+{
+  "likelihoodLevels": 5,
+  "likelihoodDescriptions": [
+    {
+      "id": "A",
+      "label": "A",
+      "description": "Very unlikely"
+    },
+    {
+      "id": "B", 
+      "label": "B",
+      "description": "Unlikely"
+    },
+    {
+      "id": "C",
+      "label": "C", 
+      "description": "Possible"
+    },
+    {
+      "id": "D",
+      "label": "D",
+      "description": "Likely"
+    },
+    {
+      "id": "E",
+      "label": "E",
+      "description": "Very likely"
+    }
+  ],
+  "severityCategories": [
+    "personnel",
+    "asset", 
+    "environmental",
+    "reputation",
+    "operation"
+  ],
+  "severityDescriptions": {
+    "1": {
+      "personnel": "Minor injury, no lost time",
+      "asset": "Minor damage, easily repairable",
+      "environmental": "Minimal environmental impact",
+      "reputation": "No reputation impact",
+      "operation": "No operational impact"
+    },
+    "2": {
+      "personnel": "Minor injury, some lost time",
+      "asset": "Moderate damage, repairable",
+      "environmental": "Minor environmental impact",
+      "reputation": "Minor local reputation impact",
+      "operation": "Minor operational disruption"
+    },
+    "3": {
+      "personnel": "Serious injury, significant lost time",
+      "asset": "Major damage, expensive repair",
+      "environmental": "Moderate environmental impact",
+      "reputation": "Moderate reputation impact",
+      "operation": "Moderate operational disruption"
+    },
+    "4": {
+      "personnel": "Major injury, permanent disability",
+      "asset": "Severe damage, major repair cost",
+      "environmental": "Major environmental impact",
+      "reputation": "Major reputation impact",
+      "operation": "Major operational disruption"
+    },
+    "5": {
+      "personnel": "Multiple fatalities",
+      "asset": "Total loss of facility",
+      "environmental": "Permanent environmental damage",
+      "reputation": "Major international effect",
+      "operation": "Loss of operation up to a year"
+    }
+  },
+  "riskLevels": 3,
+  "riskLevelDescriptions": [
+    {
+      "id": "low",
+      "label": "Low",
+      "color": "#28a745"
+    },
+    {
+      "id": "medium",
+      "label": "Medium", 
+      "color": "#ffc107"
+    },
+    {
+      "id": "high",
+      "label": "High",
+      "color": "#dc3545"
+    }
+  ],
+  "matrix": {
+    "A-1": "low",
+    "A-2": "low",
+    "A-3": "low",
+    "A-4": "medium",
+    "A-5": "medium",
+    "B-1": "low",
+    "B-2": "low",
+    "B-3": "medium",
+    "B-4": "medium",
+    "B-5": "high",
+    "C-1": "low",
+    "C-2": "medium",
+    "C-3": "medium",
+    "C-4": "high",
+    "C-5": "high",
+    "D-1": "medium",
+    "D-2": "medium",
+    "D-3": "high",
+    "D-4": "high",
+    "D-5": "high",
+    "E-1": "medium",
+    "E-2": "high",
+    "E-3": "high",
+    "E-4": "high",
+    "E-5": "high"
+  }
+}

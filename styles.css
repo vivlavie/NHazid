@@ -1,0 +1,354 @@
+:root {
+  --grid-border: #d0d7de;
+  --header-bg: #f6f8fa;
+  --accent: #0a7ea4;
+  --danger: #c62828;
+  --muted: #6e7781;
+  --bg: #ffffff;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: #111;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--grid-border);
+  background: var(--header-bg);
+}
+
+.app-header h1 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.toolbar button {
+  margin-right: 8px;
+}
+
+main {
+  padding: 16px;
+}
+
+.hazid-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.hazid-table th, .hazid-table td {
+  border: 1px solid var(--grid-border);
+  vertical-align: top;
+  padding: 6px;
+}
+
+.hazid-table th {
+  background: var(--header-bg);
+  text-align: left;
+  font-weight: 600;
+}
+
+/* Column widths for readability */
+.col-hazard { width: 220px; }
+.col-cause { width: 220px; }
+.col-cause-measures { width: 240px; }
+.col-consequence { width: 220px; }
+.col-conseq-measures { width: 240px; }
+.col-sev-cat { width: 140px; }
+.col-sev { width: 120px; }
+.col-like { width: 140px; }
+.col-risk { width: 120px; }
+.col-reco { width: 260px; }
+.col-actions { width: 90px; }
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.row-segment {
+  border-bottom: 1px dashed var(--grid-border);
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+
+.row-segment:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* Segmented cells to divide height equally per group */
+.segments {
+  height: 100%;
+}
+.segments .segment {
+  border-bottom: 1px dashed var(--grid-border);
+  padding: 6px 0;
+}
+.segments .segment:last-child {
+  border-bottom: none;
+}
+
+.inline-controls {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+button.icon {
+  background: transparent;
+  border: 1px solid var(--grid-border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+button.icon.danger { border-color: var(--danger); color: var(--danger); }
+button.icon.primary { border-color: var(--accent); color: var(--accent); }
+button.icon.muted { border-color: var(--muted); color: var(--muted); }
+
+input[type="text"], select, textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--grid-border);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--grid-border);
+  border-radius: 12px;
+  padding: 2px 8px;
+  margin: 2px 4px 2px 0;
+  background: #fff;
+}
+
+.small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cell-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.row-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.hidden { display: none; }
+
+/* Tab system */
+.tab-button {
+  margin-right: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--grid-border);
+  background: var(--bg);
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+}
+
+.tab-button.active {
+  background: var(--header-bg);
+  border-bottom-color: var(--bg);
+}
+
+.panel {
+  display: none;
+}
+
+.panel.active {
+  display: block;
+}
+
+/* Risk matrix config */
+.risk-matrix-config {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.config-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  border: 1px solid var(--grid-border);
+  border-radius: 8px;
+  background: var(--header-bg);
+}
+
+.config-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: var(--accent);
+}
+
+.scale-item, .risk-level-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px;
+  background: white;
+  border: 1px solid var(--grid-border);
+  border-radius: 6px;
+}
+
+.scale-item input, .risk-level-item input {
+  flex: 1;
+  margin: 0;
+}
+
+.color-picker {
+  width: 40px;
+  height: 30px;
+  border: 1px solid var(--grid-border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.risk-matrix-display {
+  margin-top: 30px;
+  padding: 20px;
+  border: 1px solid var(--grid-border);
+  border-radius: 8px;
+  background: var(--header-bg);
+}
+
+.risk-matrix-table {
+  border-collapse: collapse;
+  margin-top: 15px;
+  max-width: 600px;
+  border: 2px solid var(--grid-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.risk-matrix-table th,
+.risk-matrix-table td {
+  border: 1px solid var(--grid-border);
+  padding: 8px;
+  text-align: center;
+  min-width: 60px;
+  min-height: 40px;
+}
+
+.risk-header {
+  background: #f6f8fa;
+  color: #111;
+  font-weight: bold;
+}
+
+.risk-cell {
+  cursor: pointer;
+  font-weight: 500;
+  color: white;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+  transition: opacity 0.2s;
+}
+
+.risk-cell:hover {
+  opacity: 0.8;
+}
+
+/* Severity descriptions table */
+.severity-descriptions {
+  margin-top: 30px;
+  padding: 20px;
+  border: 1px solid var(--grid-border);
+  border-radius: 8px;
+  background: var(--header-bg);
+}
+
+.severity-descriptions-table {
+  border-collapse: collapse;
+  margin-top: 15px;
+  width: 100%;
+  max-width: 1000px;
+  border: 2px solid var(--grid-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.severity-descriptions-table th,
+.severity-descriptions-table td {
+  border: 1px solid var(--grid-border);
+  padding: 4px;
+  text-align: center;
+  vertical-align: top;
+}
+
+.severity-descriptions-table th {
+  background: #f6f8fa;
+  color: #111;
+  font-weight: bold;
+  min-width: 80px;
+}
+
+.severity-descriptions-table td {
+  padding: 0;
+}
+
+.severity-description-input {
+  width: 100%;
+  height: 100%;
+  min-height: 60px;
+  border: none;
+  padding: 8px;
+  font-size: 12px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.severity-description-input:focus {
+  outline: 2px solid var(--accent);
+  background: #f8f9fa;
+}
+
+/* Risk matrix config actions */
+.config-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.config-actions button {
+  padding: 8px 16px;
+}
+
+.current-config-display {
+  background: white;
+  border: 1px solid var(--grid-border);
+  border-radius: 6px;
+  padding: 15px;
+  font-family: monospace;
+  font-size: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.severity-category {
+  margin-bottom: 10px;
+}
+
+.severity-category select {
+  margin-left: 10px;
+}
+
+

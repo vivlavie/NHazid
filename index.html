@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HAZID Workshop Table</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>HAZID Workshop</h1>
+      <div class="toolbar">
+        <button id="tab-hazards" class="tab-button active">Hazards</button>
+        <button id="tab-risk-matrix" class="tab-button">Risk Matrix</button>
+        <button id="add-hazard">Add hazard</button>
+        <button id="import-json">Import</button>
+        <button id="export-json">Export JSON</button>
+        <button id="export-excel">Export Excel</button>
+        <button id="clear-all">Clear</button>
+        <label class="autosave">
+          <input type="checkbox" id="autosave-toggle" checked /> Autosave
+        </label>
+      </div>
+    </header>
+
+    <main>
+      <div id="hazards-panel" class="panel active">
+        <div id="table-container"></div>
+      </div>
+      <div id="risk-matrix-panel" class="panel">
+        <div class="severity-descriptions">
+          <h2>Severity Level Descriptions</h2>
+          <p>Edit the descriptions for each severity level across different categories. This helps define what each severity level means for different types of consequences.</p>
+          <div id="severity-descriptions-table"></div>
+        </div>
+        
+        <div class="risk-matrix-config">
+          <h2>Risk Matrix Configuration</h2>
+          <p>Import or export risk matrix definitions in JSON format. The matrix is read-only and can only be updated through JSON import.</p>
+          
+          <div class="config-actions">
+            <button id="import-risk-matrix" class="icon primary">Import Risk Matrix JSON</button>
+            <button id="export-risk-matrix" class="icon">Export Risk Matrix JSON</button>
+            <button id="load-default-matrix" class="icon">Load Default Matrix</button>
+          </div>
+          
+        </div>
+        
+        <div class="risk-matrix-display">
+          <h2>Risk Matrix</h2>
+          <p>Click any cell to change its risk level. The matrix shows likelihood (A-E) across the top and severity (1-5) down the left.</p>
+          <div id="risk-matrix-table"></div>
+        </div>
+      </div>
+    </main>
+
+    <template id="hazid-table-template">
+      <table class="hazid-table">
+        <thead>
+          <tr>
+            <th class="col-hazard">Hazard</th>
+            <th class="col-cause">Causes</th>
+            <th class="col-cause-measures">Prevention measures</th>
+            <th class="col-consequence">Consequences</th>
+            <th class="col-conseq-measures">Mitigation measures</th>
+            <th class="col-sev-cat">Severity category</th>
+            <th class="col-sev">Severity level</th>
+            <th class="col-like">Likelihood level</th>
+            <th class="col-risk">Risk</th>
+            <th class="col-reco">Recommendations</th>
+            <th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+  </html>
+
+
