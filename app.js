@@ -809,99 +809,171 @@
     });
   }
 
-  // Excel export using ExcelJS
+  // Excel export using ExcelJS - rewritten from scratch
   async function exportToExcel() {
     try {
       if (!window.ExcelJS) { alert('Excel export library not loaded'); return; }
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('HAZID');
 
-    // Header row
-    const headers = ['Hazard','Causes','Prevention measures','Consequences','Mitigation measures','Severity category','Severity level','Likelihood level','Risk','Recommendations'];
-    sheet.addRow(headers);
-    // Style header
-    const headerRow = sheet.getRow(1);
-    headerRow.font = { bold: true };
-    headerRow.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-    headerRow.eachCell((cell) => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF6F8FA' } }; cell.border = allBorders('#D0D7DE'); });
+      // Header row
+      const headers = ['Hazard','Causes','Prevention measures','Consequences','Mitigation measures','Severity category','Severity level','Likelihood level','Risk','Recommendations'];
+      sheet.addRow(headers);
+      
+      // Style header
+      const headerRow = sheet.getRow(1);
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      headerRow.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      headerRow.eachCell((cell) => { 
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF024F75' } }; 
+        cell.border = headerBorders(); 
+      });
 
-    let currentRow = 2;
-    const borderColor = '#D0D7DE';
+      let currentRow = 2;
+      const borderColor = '#024F75';
 
-    state.hazards.forEach((hazard) => {
-      const causeCount = Math.max(hazard.causes.length, 1);
-      const consCount = Math.max(hazard.consequences.length, 1);
-      const blockRows = Math.max(causeCount, consCount);
-      const startRow = currentRow;
+      state.hazards.forEach((hazard) => {
+        const causeCount = Math.max(hazard.causes.length, 1);
+        const consCount = Math.max(hazard.consequences.length, 1);
+        
+        // Calculate total prevention measures (causes with no measures count as 1)
+        const totalPreventionMeasures = hazard.causes.reduce((sum, cause) => {
+          const measures = cause ? (cause.preventionMeasures || []).length : 0;
+          return sum + Math.max(measures, 1);
+        }, 0);
+        
+        // Calculate total mitigation measures (consequences with no measures count as 1)
+        const totalMitigationMeasures = hazard.consequences.reduce((sum, cons) => {
+          const measures = cons ? (cons.mitigationMeasures || []).length : 0;
+          return sum + Math.max(measures, 1);
+        }, 0);
+        
+        // Total rows needed = max of prevention vs mitigation measures
+        const blockRows = Math.max(totalPreventionMeasures, totalMitigationMeasures, 1);
+        const startRow = currentRow;
 
-      // Pre-create rows for the block
-      for (let i = 0; i < blockRows; i += 1) sheet.addRow(['','','','','','','','','','']);
+        // Pre-create all rows for this hazard
+        for (let i = 0; i < blockRows; i += 1) {
+          sheet.addRow(['','','','','','','','','','']);
+        }
 
-      // Merge Hazard and Recommendations columns across the block
-      mergeAndSet(sheet, startRow, 1, blockRows, hazard.title + (hazard.description ? `\n${hazard.description}` : ''));
-      mergeAndSet(sheet, startRow, 10, blockRows, hazard.recommendations.map(r => `${r.action} — ${r.responsible}`).join('\n'));
+        // Merge Hazard column across all rows
+        mergeAndSet(sheet, startRow, 1, blockRows, hazard.title + (hazard.description ? `\n${hazard.description}` : ''));
 
-      // Causes and Prevention measures columns: each cause subdivides proportionally
-      for (let i = 0; i < causeCount; i += 1) {
-        const cause = hazard.causes[i];
-        const causeStart = startRow + Math.floor(i * blockRows / causeCount);
-        const causeEnd = i === causeCount - 1 ? startRow + blockRows - 1 : startRow + Math.floor((i + 1) * blockRows / causeCount) - 1;
-        mergeAndSet(sheet, causeStart, 2, (causeEnd - causeStart + 1), cause ? (cause.text || '') : '');
-        // Measures under cause subdivide within this span
-        if (cause && (cause.preventionMeasures || []).length > 0) {
-          const ms = cause.preventionMeasures;
-          for (let mi = 0; mi < ms.length; mi += 1) {
-            const segStart = causeStart + Math.floor(mi * (causeEnd - causeStart + 1) / ms.length);
-            const segEnd = mi === ms.length - 1 ? causeEnd : causeStart + Math.floor((mi + 1) * (causeEnd - causeStart + 1) / ms.length) - 1;
-            mergeAndSet(sheet, segStart, 3, (segEnd - segStart + 1), ms[mi].text || '');
+        // Process Causes and Prevention Measures
+        let causeRowOffset = 0;
+        hazard.causes.forEach((cause, causeIndex) => {
+          const actualMeasures = cause ? (cause.preventionMeasures || []).length : 0;
+          let causeRows = Math.max(actualMeasures, 1);
+          
+          // Last cause expands to fill remaining rows
+          if (causeIndex === hazard.causes.length - 1) {
+            causeRows = blockRows - causeRowOffset;
           }
-        } else {
-          mergeAndSet(sheet, causeStart, 3, (causeEnd - causeStart + 1), '');
-        }
-      }
-
-      // Consequences and Mitigation measures columns, with Risk columns subdivided against consequences
-      for (let i = 0; i < consCount; i += 1) {
-        const cons = hazard.consequences[i];
-        const consStart = startRow + Math.floor(i * blockRows / consCount);
-        const consEnd = i === consCount - 1 ? startRow + blockRows - 1 : startRow + Math.floor((i + 1) * blockRows / consCount) - 1;
-        mergeAndSet(sheet, consStart, 4, (consEnd - consStart + 1), cons ? (cons.text || '') : '');
-
-        // Mitigation measures within consequence span
-        if (cons && (cons.mitigationMeasures || []).length > 0) {
-          const ms = cons.mitigationMeasures;
-          for (let mi = 0; mi < ms.length; mi += 1) {
-            const segStart = consStart + Math.floor(mi * (consEnd - consStart + 1) / ms.length);
-            const segEnd = mi === ms.length - 1 ? consEnd : consStart + Math.floor((mi + 1) * (consEnd - consStart + 1) / ms.length) - 1;
-            mergeAndSet(sheet, segStart, 5, (segEnd - segStart + 1), ms[mi].text || '');
+          
+          const causeStartRow = startRow + causeRowOffset;
+          
+          // Merge cause text across its rows
+          mergeAndSet(sheet, causeStartRow, 2, causeRows, cause ? (cause.text || '') : '');
+          
+          // Add prevention measures
+          if (actualMeasures > 0) {
+            const measures = cause.preventionMeasures;
+            measures.forEach((measure, measureIndex) => {
+              const measureRow = causeStartRow + measureIndex;
+              // Last measure expands to fill remaining rows
+              const measureRows = (measureIndex === measures.length - 1) ? 
+                (causeRows - measureIndex) : 1;
+              mergeAndSet(sheet, measureRow, 3, measureRows, measure.text || '');
+            });
           }
-        } else {
-          mergeAndSet(sheet, consStart, 5, (consEnd - consStart + 1), '');
+          
+          causeRowOffset += causeRows;
+        });
+
+        // Process Consequences and Mitigation Measures
+        let consRowOffset = 0;
+        hazard.consequences.forEach((cons, consIndex) => {
+          const actualMeasures = cons ? (cons.mitigationMeasures || []).length : 0;
+          let consRows = Math.max(actualMeasures, 1);
+          
+          // Last consequence expands to fill remaining rows
+          if (consIndex === hazard.consequences.length - 1) {
+            consRows = blockRows - consRowOffset;
+          }
+          
+          const consStartRow = startRow + consRowOffset;
+          
+          // Merge consequence text across its rows
+          mergeAndSet(sheet, consStartRow, 4, consRows, cons ? (cons.text || '') : '');
+          
+          // Add mitigation measures
+          if (actualMeasures > 0) {
+            const measures = cons.mitigationMeasures;
+            measures.forEach((measure, measureIndex) => {
+              const measureRow = consStartRow + measureIndex;
+              // Last measure expands to fill remaining rows
+              const measureRows = (measureIndex === measures.length - 1) ? 
+                (consRows - measureIndex) : 1;
+              mergeAndSet(sheet, measureRow, 5, measureRows, measure.text || '');
+            });
+          }
+          
+          // Risk columns - merge across consequence rows
+          const risk = cons ? cons.risk || {} : {};
+          mergeAndSet(sheet, consStartRow, 6, consRows, risk.severityCategory || '');
+          mergeAndSet(sheet, consStartRow, 7, consRows, risk.severityLevel || '');
+          mergeAndSet(sheet, consStartRow, 8, consRows, risk.likelihoodLevel || '');
+          mergeAndSet(sheet, consStartRow, 9, consRows, risk.riskScore || '');
+          
+          consRowOffset += consRows;
+        });
+
+        // Merge Recommendations across all rows
+        mergeAndSet(sheet, startRow, 10, blockRows, hazard.recommendations.map(r => `${r.action} — ${r.responsible}`).join('\n'));
+
+        // Apply borders and styling
+        for (let r = startRow; r < startRow + blockRows; r += 1) {
+          for (let c = 1; c <= 10; c += 1) {
+            const cell = sheet.getCell(r, c);
+            cell.border = allBorders(borderColor);
+            cell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
+          }
         }
 
-        // Risk columns alongside consequence span
-        const risk = cons ? cons.risk || {} : {};
-        mergeAndSet(sheet, consStart, 6, (consEnd - consStart + 1), risk.severityCategory || '');
-        mergeAndSet(sheet, consStart, 7, (consEnd - consStart + 1), risk.severityLevel || '');
-        mergeAndSet(sheet, consStart, 8, (consEnd - consStart + 1), risk.likelihoodLevel || '');
-        mergeAndSet(sheet, consStart, 9, (consEnd - consStart + 1), risk.riskScore || '');
-      }
+        // Apply risk colors after all merging and styling is complete
+        consRowOffset = 0;
+        hazard.consequences.forEach((cons, consIndex) => {
+          const actualMeasures = cons ? (cons.mitigationMeasures || []).length : 0;
+          let consRows = Math.max(actualMeasures, 1);
+          
+          // Last consequence expands to fill remaining rows
+          if (consIndex === hazard.consequences.length - 1) {
+            consRows = blockRows - consRowOffset;
+          }
+          
+          const consStartRow = startRow + consRowOffset;
+          const risk = cons ? cons.risk || {} : {};
+          const riskColor = getRiskLevelColor(risk.severityLevel, risk.likelihoodLevel);
+          
+          if (riskColor && risk.riskScore) {
+            // Apply color to all rows in the merged range
+            for (let r = consStartRow; r < consStartRow + consRows; r++) {
+              const riskCell = sheet.getCell(r, 9);
+              riskCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cssHexToARGB(riskColor) } };
+              riskCell.font = { color: { argb: 'FFFFFFFF' } };
+            }
+          }
+          
+          consRowOffset += consRows;
+        });
 
-      // Apply borders for the block
-      for (let r = startRow; r < startRow + blockRows; r += 1) {
-        for (let c = 1; c <= 10; c += 1) {
-          const cell = sheet.getCell(r, c);
-          cell.border = allBorders(borderColor);
-          cell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
-        }
-      }
+        currentRow = startRow + blockRows;
+      });
 
-      currentRow = startRow + blockRows;
-    });
-
-    // Column widths for readability
-    const widths = [30,24,28,24,28,18,14,18,12,30];
-    sheet.columns = widths.map(w => ({ width: w }));
+      // Column widths for readability
+      const widths = [30,24,28,24,28,18,14,18,12,30];
+      sheet.columns = widths.map(w => ({ width: w }));
 
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -925,6 +997,17 @@
       left: { style: 'thin', color: { argb } },
       bottom: { style: 'thin', color: { argb } },
       right: { style: 'thin', color: { argb } }
+    };
+  }
+
+  function headerBorders() {
+    const whiteArgb = 'FFFFFFFF';
+    const blueArgb = cssHexToARGB('#024F75');
+    return {
+      top: { style: 'thin', color: { argb: blueArgb } },
+      left: { style: 'thin', color: { argb: whiteArgb } },
+      bottom: { style: 'thin', color: { argb: blueArgb } },
+      right: { style: 'thin', color: { argb: whiteArgb } }
     };
   }
 
