@@ -1,0 +1,383 @@
+{
+  "hazards": [
+    {
+      "id": "7mtl7joo",
+      "title": "New hazard",
+      "description": "",
+      "causes": [
+        {
+          "id": "om4ucniq",
+          "text": "c1",
+          "preventionMeasures": [
+            {
+              "id": "raomy9sy",
+              "text": "p1"
+            },
+            {
+              "id": "hmsfono6",
+              "text": "p2"
+            },
+            {
+              "id": "1zvkefzz",
+              "text": "p3"
+            }
+          ]
+        },
+        {
+          "id": "r2i2gdma",
+          "text": "c2",
+          "preventionMeasures": []
+        },
+        {
+          "id": "9o291gvz",
+          "text": "c3",
+          "preventionMeasures": []
+        }
+      ],
+      "consequences": [
+        {
+          "id": "2nujlw5t",
+          "text": "q1",
+          "mitigationMeasures": [
+            {
+              "id": "j7v7zfo9",
+              "text": "m1"
+            },
+            {
+              "id": "5ny9r7nf",
+              "text": "m2"
+            }
+          ],
+          "risk": {
+            "severityCategory": "personnel",
+            "severityLevel": "2",
+            "likelihoodLevel": "D",
+            "riskScore": "Medium"
+          }
+        },
+        {
+          "id": "pr7ww188",
+          "text": "q2",
+          "mitigationMeasures": [],
+          "risk": {
+            "severityCategory": "",
+            "severityLevel": "",
+            "likelihoodLevel": "",
+            "riskScore": ""
+          }
+        },
+        {
+          "id": "5ocdi07p",
+          "text": "q3",
+          "mitigationMeasures": [],
+          "risk": {
+            "severityCategory": "asset",
+            "severityLevel": "3",
+            "likelihoodLevel": "D",
+            "riskScore": "Medium"
+          }
+        }
+      ],
+      "recommendations": [
+        {
+          "id": "d93n0fo2",
+          "action": "Do something at first",
+          "responsible": ""
+        },
+        {
+          "id": "x1swyk42",
+          "action": "You need more action.",
+          "responsible": "Who will do the?"
+        }
+      ]
+    },
+    {
+      "id": "nlhcyajb",
+      "title": "Another hazard",
+      "description": "",
+      "causes": [
+        {
+          "id": "545b2gfz",
+          "text": "c1",
+          "preventionMeasures": [
+            {
+              "id": "nkdmzdte",
+              "text": "p1"
+            }
+          ]
+        }
+      ],
+      "consequences": [
+        {
+          "id": "w7gbxgtr",
+          "text": "q1",
+          "mitigationMeasures": [
+            {
+              "id": "nkc6d1ro",
+              "text": "m1"
+            },
+            {
+              "id": "7dcrmuct",
+              "text": "m2"
+            }
+          ],
+          "risk": {
+            "severityCategory": "environmental",
+            "severityLevel": "2",
+            "likelihoodLevel": "C",
+            "riskScore": "Low"
+          }
+        }
+      ],
+      "recommendations": [
+        {
+          "id": "wxubblio",
+          "action": "Action for haz2",
+          "responsible": ""
+        }
+      ]
+    }
+  ],
+  "riskMatrix": {
+    "likelihood": [
+      {
+        "id": "A",
+        "label": "A",
+        "description": "Very unlikely"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "description": "Unlikely"
+      },
+      {
+        "id": "C",
+        "label": "C",
+        "description": "Possible"
+      },
+      {
+        "id": "D",
+        "label": "D",
+        "description": "Likely"
+      },
+      {
+        "id": "E",
+        "label": "E",
+        "description": "Very likely"
+      }
+    ],
+    "severity": [
+      {
+        "id": "1",
+        "label": "1",
+        "description": "Negligible effect",
+        "category": "personnel"
+      },
+      {
+        "id": "2",
+        "label": "2",
+        "description": "Minor effect",
+        "category": "personnel"
+      },
+      {
+        "id": "3",
+        "label": "3",
+        "description": "Moderate effect",
+        "category": "personnel"
+      },
+      {
+        "id": "4",
+        "label": "4",
+        "description": "Major effect",
+        "category": "personnel"
+      },
+      {
+        "id": "5",
+        "label": "5",
+        "description": "Severest effect",
+        "category": "personnel"
+      }
+    ],
+    "severityDescriptions": {
+      "1": {
+        "personnel": "Minor injury, no lost time",
+        "asset": "Minor damage, easily repairable",
+        "environmental": "Minimal environmental impact",
+        "reputation": "No reputation impact",
+        "operation": "No operational impact"
+      },
+      "2": {
+        "personnel": "Minor injury, some lost time",
+        "asset": "Moderate damage, repairable",
+        "environmental": "Minor environmental impact",
+        "reputation": "Minor local reputation impact",
+        "operation": "Minor operational disruption"
+      },
+      "3": {
+        "personnel": "Serious injury, significant lost time",
+        "asset": "Major damage, expensive repair",
+        "environmental": "Moderate environmental impact",
+        "reputation": "Moderate reputation impact",
+        "operation": "Moderate operational disruption"
+      },
+      "4": {
+        "personnel": "Major injury, permanent disability",
+        "asset": "Severe damage, major repair cost",
+        "environmental": "Major environmental impact",
+        "reputation": "Major reputation impact",
+        "operation": "Major operational disruption"
+      },
+      "5": {
+        "personnel": "Multiple fatalities",
+        "asset": "Total loss of facility",
+        "environmental": "Permanent environmental damage",
+        "reputation": "Major international effect",
+        "operation": "Loss of operation up to a year"
+      }
+    },
+    "riskLevels": [
+      {
+        "id": "low",
+        "label": "Low",
+        "color": "#28a745"
+      },
+      {
+        "id": "medium",
+        "label": "Medium",
+        "color": "#ffc107"
+      },
+      {
+        "id": "high",
+        "label": "High",
+        "color": "#dc3545"
+      }
+    ],
+    "matrix": {
+      "A-1": {
+        "id": "low",
+        "label": "Low",
+        "color": "#28a745"
+      },
+      "A-2": {
+        "id": "low",
+        "label": "Low",
+        "color": "#28a745"
+      },
+      "A-3": {
+        "id": "low",
+        "label": "Low",
+        "color": "#28a745"
+      },
+      "A-4": {
+        "id": "low",
+        "label": "Low",
+        "color": "#28a745"
+      },
+      "A-5": {
+        "id": "medium",
+        "label": "Medium",
+        "color": "#ffc107"
+      },
+      "B-1": {
+        "id": "low",
+        "label": "Low",
+        "color": "#28a745"
+      },
+      "B-2": {
+        "id": "low",
+        "label": "Low",
+        "color": "#28a745"
+      },
+      "B-3": {
+        "id": "low",
+        "label": "Low",
+        "color": "#28a745"
+      },
+      "B-4": {
+        "id": "medium",
+        "label": "Medium",
+        "color": "#ffc107"
+      },
+      "B-5": {
+        "id": "medium",
+        "label": "Medium",
+        "color": "#ffc107"
+      },
+      "C-1": {
+        "id": "low",
+        "label": "Low",
+        "color": "#28a745"
+      },
+      "C-2": {
+        "id": "low",
+        "label": "Low",
+        "color": "#28a745"
+      },
+      "C-3": {
+        "id": "medium",
+        "label": "Medium",
+        "color": "#ffc107"
+      },
+      "C-4": {
+        "id": "medium",
+        "label": "Medium",
+        "color": "#ffc107"
+      },
+      "C-5": {
+        "id": "high",
+        "label": "High",
+        "color": "#dc3545"
+      },
+      "D-1": {
+        "id": "low",
+        "label": "Low",
+        "color": "#28a745"
+      },
+      "D-2": {
+        "id": "medium",
+        "label": "Medium",
+        "color": "#ffc107"
+      },
+      "D-3": {
+        "id": "medium",
+        "label": "Medium",
+        "color": "#ffc107"
+      },
+      "D-4": {
+        "id": "high",
+        "label": "High",
+        "color": "#dc3545"
+      },
+      "D-5": {
+        "id": "high",
+        "label": "High",
+        "color": "#dc3545"
+      },
+      "E-1": {
+        "id": "medium",
+        "label": "Medium",
+        "color": "#ffc107"
+      },
+      "E-2": {
+        "id": "medium",
+        "label": "Medium",
+        "color": "#ffc107"
+      },
+      "E-3": {
+        "id": "high",
+        "label": "High",
+        "color": "#dc3545"
+      },
+      "E-4": {
+        "id": "high",
+        "label": "High",
+        "color": "#dc3545"
+      },
+      "E-5": {
+        "id": "high",
+        "label": "High",
+        "color": "#dc3545"
+      }
+    }
+  }
+}

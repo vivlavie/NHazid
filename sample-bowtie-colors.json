@@ -1,0 +1,21 @@
+{
+  "hazard": {
+    "fill": "#ff6b6b",
+    "stroke": "#d63031"
+  },
+  "cause": {
+    "fill": "#74b9ff",
+    "stroke": "#0984e3"
+  },
+  "consequence": {
+#   "fill": "#fd79a8",
+    "fill": "#00ff00",
+    "stroke": "#e84393"
+  },
+  "measure": {
+    "fill": "#55a3ff",
+    "stroke": "#2d3436"
+  },
+  "line": "#636e72",
+  "measureLine": "#55a3ff"
+}

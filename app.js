@@ -49,6 +49,16 @@
     return state.compactMode ? compactChar : normalText;
   }
 
+  // Helper function to create button with tooltip
+  function createButtonWithTooltip(attrs, normalText, compactChar) {
+    const button = createEl('button', attrs);
+    button.textContent = getButtonText(normalText, compactChar);
+    if (state.compactMode) {
+      button.title = normalText; // Show full text as tooltip in compact mode
+    }
+    return button;
+  }
+
   // Persistence
   const persist = {
     load() {
@@ -77,6 +87,7 @@
     autosave: true,
     compactMode: false,
     clipboard: null, // holds a copied item or hazard
+    bowtieColors: null, // holds custom bow-tie diagram colors
     riskMatrix: {
       likelihood: [
         { id: 'A', label: 'A', description: 'Very unlikely' },
@@ -153,6 +164,13 @@
     return riskLevel ? riskLevel.color : '';
   };
 
+  const getRiskLevel = (severityLevel, likelihoodLevel) => {
+    if (!severityLevel || !likelihoodLevel) return '';
+    const key = `${likelihoodLevel}-${severityLevel}`;
+    const riskLevel = state.riskMatrix.matrix[key];
+    return riskLevel ? riskLevel.label : '';
+  };
+
   const updateRiskMatrix = () => {
     state.riskMatrix.matrix = {};
     // Default risk assignment: higher likelihood + higher severity = higher risk
@@ -199,6 +217,9 @@
       }
       if (saved.compactMode !== undefined) {
         state.compactMode = saved.compactMode;
+      }
+      if (saved.bowtieColors) {
+        state.bowtieColors = saved.bowtieColors;
       }
     } else if (Array.isArray(saved)) {
       // Legacy format
@@ -311,9 +332,10 @@
     desc.addEventListener('input', (e) => { hazard.description = e.target.value; scheduleSave(); });
 
     const causeBtnRow = createEl('div', { class: 'inline-controls' }, [
-      createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Cause', '+'), onclick: () => { hazard.causes.push(createCause()); scheduleSaveAndRerender(); } }),
-      createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Consequence', '+'), onclick: () => { hazard.consequences.push(createConsequence()); scheduleSaveAndRerender(); } }),
-      createEl('button', { class: 'icon danger remove-button', text: getButtonText('Remove hazard', '×'), onclick: () => { state.hazards.splice(hazardIndex, 1); scheduleSaveAndRerender(); } })
+      createButtonWithTooltip({ class: 'icon primary add-button', onclick: () => { hazard.causes.push(createCause()); scheduleSaveAndRerender(); } }, '+ Cause', '+'),
+      createButtonWithTooltip({ class: 'icon primary add-button', onclick: () => { hazard.consequences.push(createConsequence()); scheduleSaveAndRerender(); } }, '+ Consequence', '+'),
+      createButtonWithTooltip({ class: 'icon edit-button', onclick: () => showBowtieDiagram(hazardIndex) }, 'Bow-tie', 'B'),
+      createButtonWithTooltip({ class: 'icon danger remove-button', onclick: () => { state.hazards.splice(hazardIndex, 1); scheduleSaveAndRerender(); } }, 'Remove hazard', '×')
     ]);
 
     wrap.append(title, desc, causeBtnRow);
@@ -323,15 +345,15 @@
   function renderCauseCell(hazard, hazardIndex, cause, rowIndex) {
     const wrap = createEl('div', { class: 'stack' });
     if (!cause) {
-      const btn = createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Add cause', '+'), onclick: () => { hazard.causes.push(createCause()); scheduleSaveAndRerender(); } });
+      const btn = createButtonWithTooltip({ class: 'icon primary add-button', onclick: () => { hazard.causes.push(createCause()); scheduleSaveAndRerender(); } }, '+ Add cause', '+');
       wrap.append(btn);
       return wrap;
     }
     const input = createEl('input', { type: 'text', value: cause.text, placeholder: 'Cause', oninput: (e) => { cause.text = e.target.value; scheduleSave(); } });
     const actions = createEl('div', { class: 'inline-controls' }, [
-      createEl('button', { class: 'icon copy-button', text: getButtonText('Copy', 'C'), onclick: () => copyItem({ type: 'cause', hazardIndex, rowIndex }) }),
-      createEl('button', { class: 'icon muted paste-button', text: getButtonText('Paste', 'P'), onclick: () => pasteItem({ type: 'cause', hazardIndex, rowIndex }) }),
-      createEl('button', { class: 'icon danger remove-button', text: getButtonText('Remove', '×'), onclick: () => { hazard.causes.splice(rowIndex, 1); scheduleSaveAndRerender(); } })
+      createButtonWithTooltip({ class: 'icon copy-button', onclick: () => copyItem({ type: 'cause', hazardIndex, rowIndex }) }, 'Copy', 'C'),
+      createButtonWithTooltip({ class: 'icon muted paste-button', onclick: () => pasteItem({ type: 'cause', hazardIndex, rowIndex }) }, 'Paste', 'P'),
+      createButtonWithTooltip({ class: 'icon danger remove-button', onclick: () => { hazard.causes.splice(rowIndex, 1); scheduleSaveAndRerender(); } }, 'Remove', '×')
     ]);
     wrap.append(input, actions);
     return wrap;
@@ -340,15 +362,15 @@
   function renderConsequenceCell(hazard, hazardIndex, consequence, rowIndex) {
     const wrap = createEl('div', { class: 'stack' });
     if (!consequence) {
-      const btn = createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Add consequence', '+'), onclick: () => { hazard.consequences.push(createConsequence()); scheduleSaveAndRerender(); } });
+      const btn = createButtonWithTooltip({ class: 'icon primary add-button', onclick: () => { hazard.consequences.push(createConsequence()); scheduleSaveAndRerender(); } }, '+ Add consequence', '+');
       wrap.append(btn);
       return wrap;
     }
     const input = createEl('input', { type: 'text', value: consequence.text, placeholder: 'Consequence', oninput: (e) => { consequence.text = e.target.value; scheduleSave(); } });
     const actions = createEl('div', { class: 'inline-controls' }, [
-      createEl('button', { class: 'icon copy-button', text: getButtonText('Copy', 'C'), onclick: () => copyItem({ type: 'consequence', hazardIndex, rowIndex }) }),
-      createEl('button', { class: 'icon muted paste-button', text: getButtonText('Paste', 'P'), onclick: () => pasteItem({ type: 'consequence', hazardIndex, rowIndex }) }),
-      createEl('button', { class: 'icon danger remove-button', text: getButtonText('Remove', '×'), onclick: () => { hazard.consequences.splice(rowIndex, 1); scheduleSaveAndRerender(); } })
+      createButtonWithTooltip({ class: 'icon copy-button', onclick: () => copyItem({ type: 'consequence', hazardIndex, rowIndex }) }, 'Copy', 'C'),
+      createButtonWithTooltip({ class: 'icon muted paste-button', onclick: () => pasteItem({ type: 'consequence', hazardIndex, rowIndex }) }, 'Paste', 'P'),
+      createButtonWithTooltip({ class: 'icon danger remove-button', onclick: () => { hazard.consequences.splice(rowIndex, 1); scheduleSaveAndRerender(); } }, 'Remove', '×')
     ]);
     wrap.append(input, actions);
     return wrap;
@@ -368,7 +390,7 @@
 
     if (owner[key].length === 0) {
       const seg = createEl('div', { class: 'segment' });
-      seg.append(createEl('button', { class: 'icon primary add-button', text: getButtonText(`+ ${label}`, '+'), onclick: () => { owner[key].push(createMeasure()); scheduleSaveAndRerender(); } }));
+      seg.append(createButtonWithTooltip({ class: 'icon primary add-button', onclick: () => { owner[key].push(createMeasure()); scheduleSaveAndRerender(); } }, `+ ${label}`, '+'));
       container.append(seg);
       return container;
     }
@@ -377,10 +399,10 @@
       const seg = createEl('div', { class: 'segment' });
       const input = createEl('input', { type: 'text', value: m.text, placeholder: label, oninput: (e) => { m.text = e.target.value; scheduleSave(); } });
       const actions = createEl('div', { class: 'inline-controls' }, [
-        createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Insert below', '+'), onclick: () => { owner[key].splice(mi + 1, 0, createMeasure()); scheduleSaveAndRerender(); } }),
-        createEl('button', { class: 'icon copy-button', text: getButtonText('Copy', 'C'), onclick: () => copyItem({ type: 'measure', ownerType, hazardIndex, rowIndex, measureIndex: mi }) }),
-        createEl('button', { class: 'icon muted paste-button', text: getButtonText('Paste', 'P'), onclick: () => pasteItem({ type: 'measure', ownerType, hazardIndex, rowIndex, measureIndex: mi }) }),
-        createEl('button', { class: 'icon danger remove-button', text: getButtonText('Remove', '×'), onclick: () => { owner[key].splice(mi, 1); scheduleSaveAndRerender(); } })
+        createButtonWithTooltip({ class: 'icon primary add-button', onclick: () => { owner[key].splice(mi + 1, 0, createMeasure()); scheduleSaveAndRerender(); } }, '+ Insert below', '+'),
+        createButtonWithTooltip({ class: 'icon copy-button', onclick: () => copyItem({ type: 'measure', ownerType, hazardIndex, rowIndex, measureIndex: mi }) }, 'Copy', 'C'),
+        createButtonWithTooltip({ class: 'icon muted paste-button', onclick: () => pasteItem({ type: 'measure', ownerType, hazardIndex, rowIndex, measureIndex: mi }) }, 'Paste', 'P'),
+        createButtonWithTooltip({ class: 'icon danger remove-button', onclick: () => { owner[key].splice(mi, 1); scheduleSaveAndRerender(); } }, 'Remove', '×')
       ]);
       seg.append(input, actions);
       container.append(seg);
@@ -472,7 +494,7 @@
     const container = segmentedContainer(count);
     if (hazard.causes.length === 0) {
       const seg = createEl('div', { class: 'segment' });
-      seg.append(createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Add cause', '+'), onclick: () => { hazard.causes.push(createCause()); scheduleSaveAndRerender(); } }));
+      seg.append(createButtonWithTooltip({ class: 'icon primary add-button', onclick: () => { hazard.causes.push(createCause()); scheduleSaveAndRerender(); } }, '+ Add cause', '+'));
       container.append(seg);
       return container;
     }
@@ -504,7 +526,7 @@
     const container = segmentedContainer(count);
     if (hazard.consequences.length === 0) {
       const seg = createEl('div', { class: 'segment' });
-      seg.append(createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Add consequence', '+'), onclick: () => { hazard.consequences.push(createConsequence()); scheduleSaveAndRerender(); } }));
+      seg.append(createButtonWithTooltip({ class: 'icon primary add-button', onclick: () => { hazard.consequences.push(createConsequence()); scheduleSaveAndRerender(); } }, '+ Add consequence', '+'));
       container.append(seg);
       return container;
     }
@@ -602,33 +624,33 @@
       const action = createEl('input', { type: 'text', value: r.action, placeholder: 'Action', oninput: (e) => { r.action = e.target.value; scheduleSave(); } });
       const resp = createEl('input', { type: 'text', value: r.responsible, placeholder: 'Responsible', oninput: (e) => { r.responsible = e.target.value; scheduleSave(); } });
       const actions = createEl('div', { class: 'inline-controls' }, [
-        createEl('button', { class: 'icon copy-button', text: getButtonText('Copy', 'C'), onclick: () => copyItem({ type: 'recommendation', hazardIndex, recoIndex: ri }) }),
-        createEl('button', { class: 'icon muted paste-button', text: getButtonText('Paste', 'P'), onclick: () => pasteItem({ type: 'recommendation', hazardIndex, recoIndex: ri }) }),
-        createEl('button', { class: 'icon danger remove-button', text: getButtonText('Remove', '×'), onclick: () => { hazards(hazardIndex).recommendations.splice(ri, 1); scheduleSaveAndRerender(); } })
+        createButtonWithTooltip({ class: 'icon copy-button', onclick: () => copyItem({ type: 'recommendation', hazardIndex, recoIndex: ri }) }, 'Copy', 'C'),
+        createButtonWithTooltip({ class: 'icon muted paste-button', onclick: () => pasteItem({ type: 'recommendation', hazardIndex, recoIndex: ri }) }, 'Paste', 'P'),
+        createButtonWithTooltip({ class: 'icon danger remove-button', onclick: () => { hazards(hazardIndex).recommendations.splice(ri, 1); scheduleSaveAndRerender(); } }, 'Remove', '×')
       ]);
       seg.append(action, resp, actions);
       wrap.append(seg);
     });
 
-    const addBtn = createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Recommendation', '+'), onclick: () => { hazards(hazardIndex).recommendations.push(createRecommendation()); scheduleSaveAndRerender(); } });
+    const addBtn = createButtonWithTooltip({ class: 'icon primary add-button', onclick: () => { hazards(hazardIndex).recommendations.push(createRecommendation()); scheduleSaveAndRerender(); } }, '+ Recommendation', '+');
     wrap.append(addBtn);
     return wrap;
   }
 
   function renderHazardActions(hazardIndex) {
     const wrap = createEl('div', { class: 'cell-actions' });
-    const addAbove = createEl('button', { class: 'icon primary add-button', text: getButtonText('Add above', '+'), onclick: () => { state.hazards.splice(hazardIndex, 0, createHazard()); scheduleSaveAndRerender(); } });
-    const addBelow = createEl('button', { class: 'icon primary add-button', text: getButtonText('Add below', '+'), onclick: () => { state.hazards.splice(hazardIndex + 1, 0, createHazard()); scheduleSaveAndRerender(); } });
-    const duplicate = createEl('button', { class: 'icon duplicate-button', text: getButtonText('Duplicate', 'D'), onclick: () => { const clone = deepClone(state.hazards[hazardIndex]); clone.id = generateId(); state.hazards.splice(hazardIndex + 1, 0, clone); scheduleSaveAndRerender(); } });
-    const copyBtn = createEl('button', { class: 'icon copy-button', text: getButtonText('Copy', 'C'), onclick: () => { state.clipboard = { type: 'hazard', data: deepClone(state.hazards[hazardIndex]) }; } });
-    const pasteBtn = createEl('button', { class: 'icon muted paste-button', text: getButtonText('Paste', 'P'), onclick: () => {
+    const addAbove = createButtonWithTooltip({ class: 'icon primary add-button', onclick: () => { state.hazards.splice(hazardIndex, 0, createHazard()); scheduleSaveAndRerender(); } }, 'Add above', '+');
+    const addBelow = createButtonWithTooltip({ class: 'icon primary add-button', onclick: () => { state.hazards.splice(hazardIndex + 1, 0, createHazard()); scheduleSaveAndRerender(); } }, 'Add below', '+');
+    const duplicate = createButtonWithTooltip({ class: 'icon duplicate-button', onclick: () => { const clone = deepClone(state.hazards[hazardIndex]); clone.id = generateId(); state.hazards.splice(hazardIndex + 1, 0, clone); scheduleSaveAndRerender(); } }, 'Duplicate', 'D');
+    const copyBtn = createButtonWithTooltip({ class: 'icon copy-button', onclick: () => { state.clipboard = { type: 'hazard', data: deepClone(state.hazards[hazardIndex]) }; } }, 'Copy', 'C');
+    const pasteBtn = createButtonWithTooltip({ class: 'icon muted paste-button', onclick: () => {
       if (!state.clipboard || state.clipboard.type !== 'hazard') return;
       const clone = deepClone(state.clipboard.data);
       clone.id = generateId();
       state.hazards.splice(hazardIndex + 1, 0, clone);
       scheduleSaveAndRerender();
-    } });
-    const remove = createEl('button', { class: 'icon danger remove-button', text: getButtonText('Remove', '×'), onclick: () => { state.hazards.splice(hazardIndex, 1); scheduleSaveAndRerender(); } });
+    } }, 'Paste', 'P');
+    const remove = createButtonWithTooltip({ class: 'icon danger remove-button', onclick: () => { state.hazards.splice(hazardIndex, 1); scheduleSaveAndRerender(); } }, 'Remove', '×');
     wrap.append(addAbove, addBelow, duplicate, copyBtn, pasteBtn, remove);
     return wrap;
   }
@@ -690,7 +712,7 @@
 
   let rerenderTimer = null;
   function scheduleSave() {
-    if (state.autosave) persist.save({ hazards: state.hazards, riskMatrix: state.riskMatrix, compactMode: state.compactMode });
+    if (state.autosave) persist.save({ hazards: state.hazards, riskMatrix: state.riskMatrix, compactMode: state.compactMode, bowtieColors: state.bowtieColors });
   }
   function scheduleSaveAndRerender() {
     scheduleSave();
@@ -740,6 +762,31 @@
     });
 
     byId('export-excel').addEventListener('click', exportToExcel);
+
+    // Bow-tie colors management
+    byId('import-bowtie-colors').addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json';
+      input.onchange = () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(String(reader.result || '{}'));
+            loadBowtieColorsFromJSON(data);
+          } catch (e) {
+            alert('Failed to import bow-tie colors JSON: ' + e.message);
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    });
+
+    byId('export-bowtie-colors').addEventListener('click', exportBowtieColors);
+    byId('load-default-bowtie-colors').addEventListener('click', loadDefaultBowtieColors);
 
     byId('import-json').addEventListener('click', () => {
       const input = document.createElement('input');
@@ -836,6 +883,7 @@
       if (!window.ExcelJS) { alert('Excel export library not loaded'); return; }
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('HAZID');
+      const hazards = state.hazards;
 
       // Header row
       const headers = ['Hazard','Causes','Prevention measures','Consequences','Mitigation measures','Severity category','Severity level','Likelihood level','Risk','Recommendations'];
@@ -996,6 +1044,198 @@
       const widths = [30,24,28,24,28,18,14,18,12,30];
       sheet.columns = widths.map(w => ({ width: w }));
 
+      // Create Summary Worksheet
+      try {
+        const summaryWorksheet = workbook.addWorksheet('Risk Summary');
+        
+        // Summary headers
+        const summaryHeaders = ['Hazard', 'Consequence', 'Severity Category', 'Severity Index', 'Likelihood Index', 'Risk Ranking'];
+        summaryHeaders.forEach((header, index) => {
+          const cell = summaryWorksheet.getCell(1, index + 1);
+          cell.value = header;
+          cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF024F75' }
+          };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        });
+
+        // Add summary data with hazard spanning
+        let summaryRow = 2;
+        hazards.forEach((hazard) => {
+          // Count risk-ranked consequences for this hazard
+          const riskRankedConsequences = hazard.consequences.filter(consequence => 
+            consequence.risk && consequence.risk.severityLevel && consequence.risk.likelihoodLevel
+          );
+          
+          if (riskRankedConsequences.length > 0) {
+            const hazardStartRow = summaryRow;
+            let consequenceCount = 0;
+            
+            riskRankedConsequences.forEach((consequence) => {
+              // Consequence
+              summaryWorksheet.getCell(summaryRow, 2).value = consequence.text || 'Untitled Consequence';
+              
+              // Severity Category
+              summaryWorksheet.getCell(summaryRow, 3).value = consequence.risk.severityCategory || '';
+              
+              // Severity Index
+              summaryWorksheet.getCell(summaryRow, 4).value = consequence.risk.severityLevel || '';
+              
+              // Likelihood Index
+              summaryWorksheet.getCell(summaryRow, 5).value = consequence.risk.likelihoodLevel || '';
+              
+              // Risk Ranking
+              const riskLevel = getRiskLevel(consequence.risk.severityLevel, consequence.risk.likelihoodLevel);
+              summaryWorksheet.getCell(summaryRow, 6).value = riskLevel || '';
+              
+              // Apply risk color to risk ranking cell
+              const riskColor = getRiskLevelColor(consequence.risk.severityLevel, consequence.risk.likelihoodLevel);
+              if (riskColor) {
+                const riskCell = summaryWorksheet.getCell(summaryRow, 6);
+                riskCell.fill = {
+                  type: 'pattern',
+                  pattern: 'solid',
+                  fgColor: { argb: cssHexToARGB(riskColor) }
+                };
+                riskCell.font = { color: { argb: 'FFFFFFFF' } };
+              }
+              
+              summaryRow++;
+              consequenceCount++;
+            });
+            
+            // Add hazard name to first row and merge if multiple consequences
+            summaryWorksheet.getCell(hazardStartRow, 1).value = hazard.title || 'Untitled Hazard';
+            if (consequenceCount > 1) {
+              summaryWorksheet.mergeCells(hazardStartRow, 1, hazardStartRow + consequenceCount - 1, 1);
+            }
+          }
+        });
+
+        // Style summary worksheet
+        // Set column widths
+        summaryWorksheet.getColumn(1).width = 30; // Hazard
+        summaryWorksheet.getColumn(2).width = 40; // Consequence
+        summaryWorksheet.getColumn(3).width = 20; // Severity Category
+        summaryWorksheet.getColumn(4).width = 15; // Severity Index
+        summaryWorksheet.getColumn(5).width = 15; // Likelihood Index
+        summaryWorksheet.getColumn(6).width = 15; // Risk Ranking
+
+        // Add borders to all cells
+        if (summaryRow > 2) {
+          // Apply borders to all data cells
+          for (let row = 1; row < summaryRow; row++) {
+            for (let col = 1; col <= 6; col++) {
+              const cell = summaryWorksheet.getCell(row, col);
+              if (row === 1) {
+                // Header borders (white)
+                cell.border = {
+                  top: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+                  left: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+                  bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+                  right: { style: 'thin', color: { argb: 'FFFFFFFF' } }
+                };
+              } else {
+                // Data cell borders (blue)
+                cell.border = {
+                  top: { style: 'thin', color: { argb: 'FF024F75' } },
+                  left: { style: 'thin', color: { argb: 'FF024F75' } },
+                  bottom: { style: 'thin', color: { argb: 'FF024F75' } },
+                  right: { style: 'thin', color: { argb: 'FF024F75' } }
+                };
+              }
+            }
+          }
+        }
+      } catch (summaryError) {
+        console.error('Summary worksheet creation failed:', summaryError);
+        // Continue with main worksheet even if summary fails
+      }
+
+      // Create Recommendations Worksheet
+      try {
+        const recommendationsWorksheet = workbook.addWorksheet('Recommendations');
+        
+        // Recommendations headers
+        const recommendationsHeaders = ['Hazard', 'Action', 'Responsible Party'];
+        recommendationsHeaders.forEach((header, index) => {
+          const cell = recommendationsWorksheet.getCell(1, index + 1);
+          cell.value = header;
+          cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF024F75' }
+          };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        });
+
+        // Add recommendations data with hazard spanning
+        let recommendationsRow = 2;
+        hazards.forEach((hazard) => {
+          if (hazard.recommendations && hazard.recommendations.length > 0) {
+            const hazardStartRow = recommendationsRow;
+            let recommendationCount = 0;
+            
+            hazard.recommendations.forEach((recommendation) => {
+              // Action
+              recommendationsWorksheet.getCell(recommendationsRow, 2).value = recommendation.action || '';
+              
+              // Responsible Party
+              recommendationsWorksheet.getCell(recommendationsRow, 3).value = recommendation.responsible || '';
+              
+              recommendationsRow++;
+              recommendationCount++;
+            });
+            
+            // Add hazard name to first row and merge if multiple recommendations
+            recommendationsWorksheet.getCell(hazardStartRow, 1).value = hazard.title || 'Untitled Hazard';
+            if (recommendationCount > 1) {
+              recommendationsWorksheet.mergeCells(hazardStartRow, 1, hazardStartRow + recommendationCount - 1, 1);
+            }
+          }
+        });
+
+        // Style recommendations worksheet
+        // Set column widths
+        recommendationsWorksheet.getColumn(1).width = 30; // Hazard
+        recommendationsWorksheet.getColumn(2).width = 50; // Action
+        recommendationsWorksheet.getColumn(3).width = 25; // Responsible Party
+
+        // Add borders to all cells
+        if (recommendationsRow > 2) {
+          // Apply borders to all data cells
+          for (let row = 1; row < recommendationsRow; row++) {
+            for (let col = 1; col <= 3; col++) {
+              const cell = recommendationsWorksheet.getCell(row, col);
+              if (row === 1) {
+                // Header borders (white)
+                cell.border = {
+                  top: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+                  left: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+                  bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+                  right: { style: 'thin', color: { argb: 'FFFFFFFF' } }
+                };
+              } else {
+                // Data cell borders (blue)
+                cell.border = {
+                  top: { style: 'thin', color: { argb: 'FF024F75' } },
+                  left: { style: 'thin', color: { argb: 'FF024F75' } },
+                  bottom: { style: 'thin', color: { argb: 'FF024F75' } },
+                  right: { style: 'thin', color: { argb: 'FF024F75' } }
+                };
+              }
+            }
+          }
+        }
+      } catch (recommendationsError) {
+        console.error('Recommendations worksheet creation failed:', recommendationsError);
+        // Continue even if recommendations worksheet fails
+      }
+
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = URL.createObjectURL(blob);
@@ -1007,7 +1247,7 @@
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Excel export failed', err);
-      alert('Excel export failed. Please try again.');
+      alert('Excel export failed: ' + err.message + '. Please check the console for details.');
     }
   }
 
@@ -1287,8 +1527,331 @@
     byId(`${tabName}-panel`).classList.add('active');
   }
 
+  // Bow-tie Diagram functionality
+  function showBowtieDiagram(hazardIndex) {
+    const hazard = state.hazards[hazardIndex];
+    const modal = document.getElementById('bowtie-modal');
+    const title = document.getElementById('bowtie-title');
+    const svg = document.getElementById('bowtie-svg');
+
+    title.textContent = `Bow-tie Diagram: ${hazard.title || 'Untitled Hazard'}`;
+
+    // Clear previous content
+    svg.innerHTML = '';
+
+    // Set up SVG dimensions
+    const width = 1000;
+    const height = 600;
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+    // Load bow-tie colors from state or use defaults
+    const bowtieColors = state.bowtieColors || {
+      hazard: { fill: '#ff6b6b', stroke: '#d63031' },
+      cause: { fill: '#74b9ff', stroke: '#0984e3' },
+      consequence: { fill: '#fd79a8', stroke: '#e84393' },
+      measure: { fill: '#55a3ff', stroke: '#2d3436' },
+      line: '#636e72',
+      measureLine: '#55a3ff'
+    };
+    
+    // Center coordinates
+    const centerX = width / 2;
+    const centerY = height / 2;
+    
+    // Draw hazard in center
+    const hazardRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    hazardRect.setAttribute('x', centerX - 60);
+    hazardRect.setAttribute('y', centerY - 30);
+    hazardRect.setAttribute('width', 120);
+    hazardRect.setAttribute('height', 60);
+    hazardRect.setAttribute('rx', 10);
+    hazardRect.setAttribute('fill', bowtieColors.hazard.fill);
+    hazardRect.setAttribute('stroke', bowtieColors.hazard.stroke);
+    hazardRect.setAttribute('stroke-width', '2');
+    svg.appendChild(hazardRect);
+    
+    const hazardText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    hazardText.setAttribute('x', centerX);
+    hazardText.setAttribute('y', centerY);
+    hazardText.setAttribute('class', 'bowtie-text');
+    hazardText.textContent = hazard.title || 'Hazard';
+    svg.appendChild(hazardText);
+    
+    // Draw causes on the left
+    const causes = hazard.causes || [];
+    const leftX = 150;
+    const causeSpacing = Math.max(80, (height - 100) / Math.max(causes.length, 1));
+    
+    causes.forEach((cause, i) => {
+      const causeY = 100 + i * causeSpacing;
+      
+      // Cause rectangle
+      const causeRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      causeRect.setAttribute('x', leftX - 50);
+      causeRect.setAttribute('y', causeY - 20);
+      causeRect.setAttribute('width', 100);
+      causeRect.setAttribute('height', 40);
+      causeRect.setAttribute('rx', 5);
+      causeRect.setAttribute('fill', bowtieColors.cause.fill);
+      causeRect.setAttribute('stroke', bowtieColors.cause.stroke);
+      causeRect.setAttribute('stroke-width', '2');
+      svg.appendChild(causeRect);
+      
+      // Cause text
+      const causeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      causeText.setAttribute('x', leftX);
+      causeText.setAttribute('y', causeY);
+      causeText.setAttribute('class', 'bowtie-text');
+      causeText.textContent = cause.text || `Cause ${i + 1}`;
+      svg.appendChild(causeText);
+      
+      // Line from cause to hazard
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', leftX + 50);
+      line.setAttribute('y1', causeY);
+      line.setAttribute('x2', centerX - 60);
+      line.setAttribute('y2', centerY);
+      line.setAttribute('stroke', bowtieColors.line);
+      line.setAttribute('stroke-width', '2');
+      line.setAttribute('fill', 'none');
+      svg.appendChild(line);
+      
+      // Prevention measures on the line
+      const measures = cause.preventionMeasures || [];
+      measures.forEach((measure, mIndex) => {
+        const measureX = leftX + 50 + (mIndex + 1) * (centerX - 60 - leftX - 50) / (measures.length + 1);
+        const measureY = causeY + (centerY - causeY) * (mIndex + 1) / (measures.length + 1);
+        
+        // Measure circle - make it larger to accommodate text
+        const measureCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        measureCircle.setAttribute('cx', measureX);
+        measureCircle.setAttribute('cy', measureY);
+        measureCircle.setAttribute('r', 25);
+        measureCircle.setAttribute('fill', bowtieColors.measure.fill);
+        measureCircle.setAttribute('stroke', bowtieColors.measure.stroke);
+        measureCircle.setAttribute('stroke-width', '1');
+        svg.appendChild(measureCircle);
+        
+        // Measure text
+        const measureText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        measureText.setAttribute('x', measureX);
+        measureText.setAttribute('y', measureY);
+        measureText.setAttribute('class', 'bowtie-measure-text');
+        measureText.textContent = measure.text || 'Prevention measure';
+        svg.appendChild(measureText);
+        
+        // Tooltip for measure
+        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        title.textContent = measure.text || 'Prevention measure';
+        measureCircle.appendChild(title);
+        
+        // Add mouse events for better tooltip support
+        measureCircle.addEventListener('mouseenter', (e) => {
+          const tooltip = document.createElement('div');
+          tooltip.className = 'bowtie-tooltip';
+          tooltip.textContent = measure.text || 'Prevention measure';
+          tooltip.style.position = 'absolute';
+          tooltip.style.background = '#333';
+          tooltip.style.color = 'white';
+          tooltip.style.padding = '5px 8px';
+          tooltip.style.borderRadius = '4px';
+          tooltip.style.fontSize = '12px';
+          tooltip.style.zIndex = '10000';
+          tooltip.style.pointerEvents = 'none';
+          tooltip.style.maxWidth = '200px';
+          tooltip.style.wordWrap = 'break-word';
+          document.body.appendChild(tooltip);
+          
+          const updateTooltip = (e) => {
+            tooltip.style.left = (e.clientX + 10) + 'px';
+            tooltip.style.top = (e.clientY - 30) + 'px';
+          };
+          
+          updateTooltip(e);
+          measureCircle.addEventListener('mousemove', updateTooltip);
+          measureCircle._tooltip = tooltip;
+        });
+        
+        measureCircle.addEventListener('mouseleave', () => {
+          if (measureCircle._tooltip) {
+            document.body.removeChild(measureCircle._tooltip);
+            measureCircle._tooltip = null;
+          }
+        });
+      });
+    });
+    
+    // Draw consequences on the right
+    const consequences = hazard.consequences || [];
+    const rightX = width - 150;
+    const consSpacing = Math.max(80, (height - 100) / Math.max(consequences.length, 1));
+    
+    consequences.forEach((consequence, i) => {
+      const consY = 100 + i * consSpacing;
+      
+      // Consequence rectangle
+      const consRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      consRect.setAttribute('x', rightX - 50);
+      consRect.setAttribute('y', consY - 20);
+      consRect.setAttribute('width', 100);
+      consRect.setAttribute('height', 40);
+      consRect.setAttribute('rx', 5);
+      consRect.setAttribute('fill', bowtieColors.consequence.fill);
+      consRect.setAttribute('stroke', bowtieColors.consequence.stroke);
+      consRect.setAttribute('stroke-width', '2');
+      svg.appendChild(consRect);
+      
+      // Consequence text
+      const consText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      consText.setAttribute('x', rightX);
+      consText.setAttribute('y', consY);
+      consText.setAttribute('class', 'bowtie-text');
+      consText.textContent = consequence.text || `Consequence ${i + 1}`;
+      svg.appendChild(consText);
+      
+      // Line from hazard to consequence
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', centerX + 60);
+      line.setAttribute('y1', centerY);
+      line.setAttribute('x2', rightX - 50);
+      line.setAttribute('y2', consY);
+      line.setAttribute('stroke', bowtieColors.line);
+      line.setAttribute('stroke-width', '2');
+      line.setAttribute('fill', 'none');
+      svg.appendChild(line);
+      
+      // Mitigation measures on the line
+      const measures = consequence.mitigationMeasures || [];
+      measures.forEach((measure, mIndex) => {
+        const measureX = centerX + 60 + (mIndex + 1) * (rightX - 50 - centerX - 60) / (measures.length + 1);
+        const measureY = centerY + (consY - centerY) * (mIndex + 1) / (measures.length + 1);
+        
+        // Measure circle - make it larger to accommodate text
+        const measureCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        measureCircle.setAttribute('cx', measureX);
+        measureCircle.setAttribute('cy', measureY);
+        measureCircle.setAttribute('r', 25);
+        measureCircle.setAttribute('fill', bowtieColors.measure.fill);
+        measureCircle.setAttribute('stroke', bowtieColors.measure.stroke);
+        measureCircle.setAttribute('stroke-width', '1');
+        svg.appendChild(measureCircle);
+        
+        // Measure text
+        const measureText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        measureText.setAttribute('x', measureX);
+        measureText.setAttribute('y', measureY);
+        measureText.setAttribute('class', 'bowtie-measure-text');
+        measureText.textContent = measure.text || 'Mitigation measure';
+        svg.appendChild(measureText);
+        
+        // Tooltip for measure
+        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        title.textContent = measure.text || 'Mitigation measure';
+        measureCircle.appendChild(title);
+        
+        // Add mouse events for better tooltip support
+        measureCircle.addEventListener('mouseenter', (e) => {
+          const tooltip = document.createElement('div');
+          tooltip.className = 'bowtie-tooltip';
+          tooltip.textContent = measure.text || 'Mitigation measure';
+          tooltip.style.position = 'absolute';
+          tooltip.style.background = '#333';
+          tooltip.style.color = 'white';
+          tooltip.style.padding = '5px 8px';
+          tooltip.style.borderRadius = '4px';
+          tooltip.style.fontSize = '12px';
+          tooltip.style.zIndex = '10000';
+          tooltip.style.pointerEvents = 'none';
+          tooltip.style.maxWidth = '200px';
+          tooltip.style.wordWrap = 'break-word';
+          document.body.appendChild(tooltip);
+          
+          const updateTooltip = (e) => {
+            tooltip.style.left = (e.clientX + 10) + 'px';
+            tooltip.style.top = (e.clientY - 30) + 'px';
+          };
+          
+          updateTooltip(e);
+          measureCircle.addEventListener('mousemove', updateTooltip);
+          measureCircle._tooltip = tooltip;
+        });
+        
+        measureCircle.addEventListener('mouseleave', () => {
+          if (measureCircle._tooltip) {
+            document.body.removeChild(measureCircle._tooltip);
+            measureCircle._tooltip = null;
+          }
+        });
+      });
+    });
+    
+    // Show modal
+    modal.style.display = 'block';
+  }
+  
+  function closeBowtieModal() {
+    const modal = document.getElementById('bowtie-modal');
+    modal.style.display = 'none';
+  }
+  
+  // Wire modal events
+  function wireBowtieModal() {
+    const modal = document.getElementById('bowtie-modal');
+    const closeBtn = modal.querySelector('.close');
+
+    closeBtn.onclick = closeBowtieModal;
+
+    window.onclick = (event) => {
+      if (event.target === modal) {
+        closeBowtieModal();
+      }
+    };
+  }
+
+  // Bow-tie colors management
+  function loadBowtieColorsFromJSON(jsonData) {
+    try {
+      state.bowtieColors = jsonData;
+      scheduleSave();
+      alert('Bow-tie colors loaded successfully!');
+    } catch (e) {
+      alert('Failed to load bow-tie colors: ' + e.message);
+    }
+  }
+
+  function exportBowtieColors() {
+    const defaultColors = {
+      hazard: { fill: '#ff6b6b', stroke: '#d63031' },
+      cause: { fill: '#74b9ff', stroke: '#0984e3' },
+      consequence: { fill: '#fd79a8', stroke: '#e84393' },
+      measure: { fill: '#55a3ff', stroke: '#2d3436' },
+      line: '#636e72',
+      measureLine: '#55a3ff'
+    };
+    
+    const colors = state.bowtieColors || defaultColors;
+    const blob = new Blob([JSON.stringify(colors, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bowtie-colors.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function loadDefaultBowtieColors() {
+    if (confirm('Load default bow-tie colors? This will replace your current color scheme.')) {
+      state.bowtieColors = null; // Reset to defaults
+      scheduleSave();
+      alert('Default bow-tie colors loaded!');
+    }
+  }
+
   // Start
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', () => {
+    init();
+    wireBowtieModal();
+  });
 })();
 
 

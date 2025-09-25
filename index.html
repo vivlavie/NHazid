@@ -16,6 +16,9 @@
         <button id="import-json">Import</button>
         <button id="export-json">Export JSON</button>
         <button id="export-excel">Export Excel</button>
+        <button id="import-bowtie-colors">Import Bow-tie Colors</button>
+        <button id="export-bowtie-colors">Export Bow-tie Colors</button>
+        <button id="load-default-bowtie-colors">Default Bow-tie Colors</button>
         <button id="clear-all">Clear</button>
         <label class="autosave">
           <input type="checkbox" id="autosave-toggle" checked /> Autosave
@@ -77,6 +80,21 @@
         <tbody></tbody>
       </table>
     </template>
+
+    <!-- Bow-tie Diagram Modal -->
+    <div id="bowtie-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="bowtie-title">Bow-tie Diagram</h2>
+          <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div id="bowtie-container">
+            <svg id="bowtie-svg" width="100%" height="600"></svg>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
     <script src="app.js"></script>
