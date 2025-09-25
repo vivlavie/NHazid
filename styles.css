@@ -351,4 +351,124 @@ input[type="text"], select, textarea {
   margin-left: 10px;
 }
 
+/* Compact mode styles */
+.compact-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-left: 16px;
+}
+
+.compact-mode .hazard-cell {
+  padding: 8px;
+}
+
+.compact-mode .segment {
+  padding: 4px 6px;
+  min-height: 24px;
+}
+
+.compact-mode .segment-input {
+  font-size: 12px;
+  padding: 2px 4px;
+  min-height: 20px;
+}
+
+.compact-mode .action-button {
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  padding: 0;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  font-weight: bold;
+  color: white !important;
+}
+
+.compact-mode .add-button {
+  background: #28a745;
+  color: white !important;
+}
+
+.compact-mode .add-button:hover {
+  background: #218838;
+  color: white !important;
+}
+
+.compact-mode .remove-button {
+  background: #dc3545;
+  color: white !important;
+}
+
+.compact-mode .remove-button:hover {
+  background: #c82333;
+  color: white !important;
+}
+
+.compact-mode .copy-button {
+  background: #17a2b8;
+  color: white !important;
+}
+
+.compact-mode .copy-button:hover {
+  background: #138496;
+  color: white !important;
+}
+
+.compact-mode .paste-button {
+  background: #6f42c1;
+  color: white !important;
+}
+
+.compact-mode .paste-button:hover {
+  background: #5a32a3;
+  color: white !important;
+}
+
+.compact-mode .edit-button {
+  background: #007bff;
+  color: white !important;
+}
+
+.compact-mode .edit-button:hover {
+  background: #0056b3;
+  color: white !important;
+}
+
+.compact-mode .duplicate-button {
+  background: #fd7e14;
+  color: white !important;
+}
+
+.compact-mode .duplicate-button:hover {
+  background: #e8650e;
+  color: white !important;
+}
+
+.compact-mode .risk-field {
+  padding: 2px 4px;
+  font-size: 11px;
+}
+
+.compact-mode .risk-field select {
+  font-size: 11px;
+  padding: 1px 2px;
+}
+
+.compact-mode .recommendation-item {
+  padding: 4px 6px;
+  margin: 2px 0;
+}
+
+.compact-mode .recommendation-input {
+  font-size: 12px;
+  padding: 2px 4px;
+  min-height: 18px;
+}
+
 

@@ -44,6 +44,11 @@
     return el;
   };
 
+  // Helper function to get button text based on compact mode
+  function getButtonText(normalText, compactChar) {
+    return state.compactMode ? compactChar : normalText;
+  }
+
   // Persistence
   const persist = {
     load() {
@@ -70,6 +75,7 @@
   const state = {
     hazards: [],
     autosave: true,
+    compactMode: false,
     clipboard: null, // holds a copied item or hazard
     riskMatrix: {
       likelihood: [
@@ -191,6 +197,9 @@
       if (saved.riskMatrix) {
         state.riskMatrix = { ...state.riskMatrix, ...saved.riskMatrix };
       }
+      if (saved.compactMode !== undefined) {
+        state.compactMode = saved.compactMode;
+      }
     } else if (Array.isArray(saved)) {
       // Legacy format
       state.hazards = saved;
@@ -213,6 +222,12 @@
     renderTable(container);
     renderRiskMatrixConfig();
     wireGlobalActions();
+    
+    // Apply compact mode class if enabled
+    if (state.compactMode) {
+      document.body.classList.add('compact-mode');
+      document.getElementById('compact-mode').checked = true;
+    }
   }
 
   // Rendering
@@ -296,9 +311,9 @@
     desc.addEventListener('input', (e) => { hazard.description = e.target.value; scheduleSave(); });
 
     const causeBtnRow = createEl('div', { class: 'inline-controls' }, [
-      createEl('button', { class: 'icon primary', text: '+ Cause', onclick: () => { hazard.causes.push(createCause()); scheduleSaveAndRerender(); } }),
-      createEl('button', { class: 'icon primary', text: '+ Consequence', onclick: () => { hazard.consequences.push(createConsequence()); scheduleSaveAndRerender(); } }),
-      createEl('button', { class: 'icon danger', text: 'Remove hazard', onclick: () => { state.hazards.splice(hazardIndex, 1); scheduleSaveAndRerender(); } })
+      createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Cause', '+'), onclick: () => { hazard.causes.push(createCause()); scheduleSaveAndRerender(); } }),
+      createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Consequence', '+'), onclick: () => { hazard.consequences.push(createConsequence()); scheduleSaveAndRerender(); } }),
+      createEl('button', { class: 'icon danger remove-button', text: getButtonText('Remove hazard', '×'), onclick: () => { state.hazards.splice(hazardIndex, 1); scheduleSaveAndRerender(); } })
     ]);
 
     wrap.append(title, desc, causeBtnRow);
@@ -308,15 +323,15 @@
   function renderCauseCell(hazard, hazardIndex, cause, rowIndex) {
     const wrap = createEl('div', { class: 'stack' });
     if (!cause) {
-      const btn = createEl('button', { class: 'icon primary', text: '+ Add cause', onclick: () => { hazard.causes.push(createCause()); scheduleSaveAndRerender(); } });
+      const btn = createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Add cause', '+'), onclick: () => { hazard.causes.push(createCause()); scheduleSaveAndRerender(); } });
       wrap.append(btn);
       return wrap;
     }
     const input = createEl('input', { type: 'text', value: cause.text, placeholder: 'Cause', oninput: (e) => { cause.text = e.target.value; scheduleSave(); } });
     const actions = createEl('div', { class: 'inline-controls' }, [
-      createEl('button', { class: 'icon', text: 'Copy', onclick: () => copyItem({ type: 'cause', hazardIndex, rowIndex }) }),
-      createEl('button', { class: 'icon muted', text: 'Paste', onclick: () => pasteItem({ type: 'cause', hazardIndex, rowIndex }) }),
-      createEl('button', { class: 'icon danger', text: 'Remove', onclick: () => { hazard.causes.splice(rowIndex, 1); scheduleSaveAndRerender(); } })
+      createEl('button', { class: 'icon copy-button', text: getButtonText('Copy', 'C'), onclick: () => copyItem({ type: 'cause', hazardIndex, rowIndex }) }),
+      createEl('button', { class: 'icon muted paste-button', text: getButtonText('Paste', 'P'), onclick: () => pasteItem({ type: 'cause', hazardIndex, rowIndex }) }),
+      createEl('button', { class: 'icon danger remove-button', text: getButtonText('Remove', '×'), onclick: () => { hazard.causes.splice(rowIndex, 1); scheduleSaveAndRerender(); } })
     ]);
     wrap.append(input, actions);
     return wrap;
@@ -325,15 +340,15 @@
   function renderConsequenceCell(hazard, hazardIndex, consequence, rowIndex) {
     const wrap = createEl('div', { class: 'stack' });
     if (!consequence) {
-      const btn = createEl('button', { class: 'icon primary', text: '+ Add consequence', onclick: () => { hazard.consequences.push(createConsequence()); scheduleSaveAndRerender(); } });
+      const btn = createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Add consequence', '+'), onclick: () => { hazard.consequences.push(createConsequence()); scheduleSaveAndRerender(); } });
       wrap.append(btn);
       return wrap;
     }
     const input = createEl('input', { type: 'text', value: consequence.text, placeholder: 'Consequence', oninput: (e) => { consequence.text = e.target.value; scheduleSave(); } });
     const actions = createEl('div', { class: 'inline-controls' }, [
-      createEl('button', { class: 'icon', text: 'Copy', onclick: () => copyItem({ type: 'consequence', hazardIndex, rowIndex }) }),
-      createEl('button', { class: 'icon muted', text: 'Paste', onclick: () => pasteItem({ type: 'consequence', hazardIndex, rowIndex }) }),
-      createEl('button', { class: 'icon danger', text: 'Remove', onclick: () => { hazard.consequences.splice(rowIndex, 1); scheduleSaveAndRerender(); } })
+      createEl('button', { class: 'icon copy-button', text: getButtonText('Copy', 'C'), onclick: () => copyItem({ type: 'consequence', hazardIndex, rowIndex }) }),
+      createEl('button', { class: 'icon muted paste-button', text: getButtonText('Paste', 'P'), onclick: () => pasteItem({ type: 'consequence', hazardIndex, rowIndex }) }),
+      createEl('button', { class: 'icon danger remove-button', text: getButtonText('Remove', '×'), onclick: () => { hazard.consequences.splice(rowIndex, 1); scheduleSaveAndRerender(); } })
     ]);
     wrap.append(input, actions);
     return wrap;
@@ -353,7 +368,7 @@
 
     if (owner[key].length === 0) {
       const seg = createEl('div', { class: 'segment' });
-      seg.append(createEl('button', { class: 'icon primary', text: `+ ${label}`, onclick: () => { owner[key].push(createMeasure()); scheduleSaveAndRerender(); } }));
+      seg.append(createEl('button', { class: 'icon primary add-button', text: getButtonText(`+ ${label}`, '+'), onclick: () => { owner[key].push(createMeasure()); scheduleSaveAndRerender(); } }));
       container.append(seg);
       return container;
     }
@@ -362,10 +377,10 @@
       const seg = createEl('div', { class: 'segment' });
       const input = createEl('input', { type: 'text', value: m.text, placeholder: label, oninput: (e) => { m.text = e.target.value; scheduleSave(); } });
       const actions = createEl('div', { class: 'inline-controls' }, [
-        createEl('button', { class: 'icon primary', text: '+ Insert below', onclick: () => { owner[key].splice(mi + 1, 0, createMeasure()); scheduleSaveAndRerender(); } }),
-        createEl('button', { class: 'icon', text: 'Copy', onclick: () => copyItem({ type: 'measure', ownerType, hazardIndex, rowIndex, measureIndex: mi }) }),
-        createEl('button', { class: 'icon muted', text: 'Paste', onclick: () => pasteItem({ type: 'measure', ownerType, hazardIndex, rowIndex, measureIndex: mi }) }),
-        createEl('button', { class: 'icon danger', text: 'Remove', onclick: () => { owner[key].splice(mi, 1); scheduleSaveAndRerender(); } })
+        createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Insert below', '+'), onclick: () => { owner[key].splice(mi + 1, 0, createMeasure()); scheduleSaveAndRerender(); } }),
+        createEl('button', { class: 'icon copy-button', text: getButtonText('Copy', 'C'), onclick: () => copyItem({ type: 'measure', ownerType, hazardIndex, rowIndex, measureIndex: mi }) }),
+        createEl('button', { class: 'icon muted paste-button', text: getButtonText('Paste', 'P'), onclick: () => pasteItem({ type: 'measure', ownerType, hazardIndex, rowIndex, measureIndex: mi }) }),
+        createEl('button', { class: 'icon danger remove-button', text: getButtonText('Remove', '×'), onclick: () => { owner[key].splice(mi, 1); scheduleSaveAndRerender(); } })
       ]);
       seg.append(input, actions);
       container.append(seg);
@@ -457,7 +472,7 @@
     const container = segmentedContainer(count);
     if (hazard.causes.length === 0) {
       const seg = createEl('div', { class: 'segment' });
-      seg.append(createEl('button', { class: 'icon primary', text: '+ Add cause', onclick: () => { hazard.causes.push(createCause()); scheduleSaveAndRerender(); } }));
+      seg.append(createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Add cause', '+'), onclick: () => { hazard.causes.push(createCause()); scheduleSaveAndRerender(); } }));
       container.append(seg);
       return container;
     }
@@ -489,7 +504,7 @@
     const container = segmentedContainer(count);
     if (hazard.consequences.length === 0) {
       const seg = createEl('div', { class: 'segment' });
-      seg.append(createEl('button', { class: 'icon primary', text: '+ Add consequence', onclick: () => { hazard.consequences.push(createConsequence()); scheduleSaveAndRerender(); } }));
+      seg.append(createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Add consequence', '+'), onclick: () => { hazard.consequences.push(createConsequence()); scheduleSaveAndRerender(); } }));
       container.append(seg);
       return container;
     }
@@ -587,33 +602,33 @@
       const action = createEl('input', { type: 'text', value: r.action, placeholder: 'Action', oninput: (e) => { r.action = e.target.value; scheduleSave(); } });
       const resp = createEl('input', { type: 'text', value: r.responsible, placeholder: 'Responsible', oninput: (e) => { r.responsible = e.target.value; scheduleSave(); } });
       const actions = createEl('div', { class: 'inline-controls' }, [
-        createEl('button', { class: 'icon', text: 'Copy', onclick: () => copyItem({ type: 'recommendation', hazardIndex, recoIndex: ri }) }),
-        createEl('button', { class: 'icon muted', text: 'Paste', onclick: () => pasteItem({ type: 'recommendation', hazardIndex, recoIndex: ri }) }),
-        createEl('button', { class: 'icon danger', text: 'Remove', onclick: () => { hazards(hazardIndex).recommendations.splice(ri, 1); scheduleSaveAndRerender(); } })
+        createEl('button', { class: 'icon copy-button', text: getButtonText('Copy', 'C'), onclick: () => copyItem({ type: 'recommendation', hazardIndex, recoIndex: ri }) }),
+        createEl('button', { class: 'icon muted paste-button', text: getButtonText('Paste', 'P'), onclick: () => pasteItem({ type: 'recommendation', hazardIndex, recoIndex: ri }) }),
+        createEl('button', { class: 'icon danger remove-button', text: getButtonText('Remove', '×'), onclick: () => { hazards(hazardIndex).recommendations.splice(ri, 1); scheduleSaveAndRerender(); } })
       ]);
       seg.append(action, resp, actions);
       wrap.append(seg);
     });
 
-    const addBtn = createEl('button', { class: 'icon primary', text: '+ Recommendation', onclick: () => { hazards(hazardIndex).recommendations.push(createRecommendation()); scheduleSaveAndRerender(); } });
+    const addBtn = createEl('button', { class: 'icon primary add-button', text: getButtonText('+ Recommendation', '+'), onclick: () => { hazards(hazardIndex).recommendations.push(createRecommendation()); scheduleSaveAndRerender(); } });
     wrap.append(addBtn);
     return wrap;
   }
 
   function renderHazardActions(hazardIndex) {
     const wrap = createEl('div', { class: 'cell-actions' });
-    const addAbove = createEl('button', { class: 'icon primary', text: 'Add above', onclick: () => { state.hazards.splice(hazardIndex, 0, createHazard()); scheduleSaveAndRerender(); } });
-    const addBelow = createEl('button', { class: 'icon primary', text: 'Add below', onclick: () => { state.hazards.splice(hazardIndex + 1, 0, createHazard()); scheduleSaveAndRerender(); } });
-    const duplicate = createEl('button', { class: 'icon', text: 'Duplicate', onclick: () => { const clone = deepClone(state.hazards[hazardIndex]); clone.id = generateId(); state.hazards.splice(hazardIndex + 1, 0, clone); scheduleSaveAndRerender(); } });
-    const copyBtn = createEl('button', { class: 'icon', text: 'Copy', onclick: () => { state.clipboard = { type: 'hazard', data: deepClone(state.hazards[hazardIndex]) }; } });
-    const pasteBtn = createEl('button', { class: 'icon muted', text: 'Paste', onclick: () => {
+    const addAbove = createEl('button', { class: 'icon primary add-button', text: getButtonText('Add above', '+'), onclick: () => { state.hazards.splice(hazardIndex, 0, createHazard()); scheduleSaveAndRerender(); } });
+    const addBelow = createEl('button', { class: 'icon primary add-button', text: getButtonText('Add below', '+'), onclick: () => { state.hazards.splice(hazardIndex + 1, 0, createHazard()); scheduleSaveAndRerender(); } });
+    const duplicate = createEl('button', { class: 'icon duplicate-button', text: getButtonText('Duplicate', 'D'), onclick: () => { const clone = deepClone(state.hazards[hazardIndex]); clone.id = generateId(); state.hazards.splice(hazardIndex + 1, 0, clone); scheduleSaveAndRerender(); } });
+    const copyBtn = createEl('button', { class: 'icon copy-button', text: getButtonText('Copy', 'C'), onclick: () => { state.clipboard = { type: 'hazard', data: deepClone(state.hazards[hazardIndex]) }; } });
+    const pasteBtn = createEl('button', { class: 'icon muted paste-button', text: getButtonText('Paste', 'P'), onclick: () => {
       if (!state.clipboard || state.clipboard.type !== 'hazard') return;
       const clone = deepClone(state.clipboard.data);
       clone.id = generateId();
       state.hazards.splice(hazardIndex + 1, 0, clone);
       scheduleSaveAndRerender();
     } });
-    const remove = createEl('button', { class: 'icon danger', text: 'Remove', onclick: () => { state.hazards.splice(hazardIndex, 1); scheduleSaveAndRerender(); } });
+    const remove = createEl('button', { class: 'icon danger remove-button', text: getButtonText('Remove', '×'), onclick: () => { state.hazards.splice(hazardIndex, 1); scheduleSaveAndRerender(); } });
     wrap.append(addAbove, addBelow, duplicate, copyBtn, pasteBtn, remove);
     return wrap;
   }
@@ -675,7 +690,7 @@
 
   let rerenderTimer = null;
   function scheduleSave() {
-    if (state.autosave) persist.save({ hazards: state.hazards, riskMatrix: state.riskMatrix });
+    if (state.autosave) persist.save({ hazards: state.hazards, riskMatrix: state.riskMatrix, compactMode: state.compactMode });
   }
   function scheduleSaveAndRerender() {
     scheduleSave();
@@ -708,6 +723,12 @@
     byId('autosave-toggle').addEventListener('change', (e) => {
       state.autosave = !!e.target.checked;
       if (state.autosave) persist.save({ hazards: state.hazards, riskMatrix: state.riskMatrix });
+    });
+
+    byId('compact-mode').addEventListener('change', (e) => {
+      state.compactMode = !!e.target.checked;
+      document.body.classList.toggle('compact-mode', state.compactMode);
+      scheduleSaveAndRerender(); // Re-render to update button styles
     });
 
     byId('export-json').addEventListener('click', () => {
