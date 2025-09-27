@@ -1574,16 +1574,25 @@
     hazardText.setAttribute('x', centerX);
     hazardText.setAttribute('y', centerY);
     hazardText.setAttribute('class', 'bowtie-text');
+    hazardText.setAttribute('text-anchor', 'middle');
+    hazardText.setAttribute('dominant-baseline', 'middle');
     hazardText.textContent = hazard.title || 'Hazard';
     svg.appendChild(hazardText);
     
-    // Draw causes on the left
+    // Draw causes on the left - center around hazard
     const causes = hazard.causes || [];
     const leftX = 150;
-    const causeSpacing = Math.max(80, (height - 100) / Math.max(causes.length, 1));
+    const maxCauseConsequence = Math.max(causes.length, hazard.consequences.length, 1);
+    const totalSpacing = height - 200; // Leave 100px margin top and bottom
+    const itemSpacing = totalSpacing / Math.max(maxCauseConsequence - 1, 1);
+    
+    // Calculate starting position to center causes around hazard
+    const totalCauseHeight = (causes.length - 1) * itemSpacing;
+    const causeStartY = centerY - totalCauseHeight / 2;
     
     causes.forEach((cause, i) => {
-      const causeY = 100 + i * causeSpacing;
+      // Position causes centered around the hazard
+      const causeY = causeStartY + i * itemSpacing;
       
       // Cause rectangle
       const causeRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -1597,11 +1606,13 @@
       causeRect.setAttribute('stroke-width', '2');
       svg.appendChild(causeRect);
       
-      // Cause text
+      // Cause text with proper centering
       const causeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
       causeText.setAttribute('x', leftX);
       causeText.setAttribute('y', causeY);
       causeText.setAttribute('class', 'bowtie-text');
+      causeText.setAttribute('text-anchor', 'middle');
+      causeText.setAttribute('dominant-baseline', 'middle');
       causeText.textContent = cause.text || `Cause ${i + 1}`;
       svg.appendChild(causeText);
       
@@ -1637,6 +1648,8 @@
         measureText.setAttribute('x', measureX);
         measureText.setAttribute('y', measureY);
         measureText.setAttribute('class', 'bowtie-measure-text');
+        measureText.setAttribute('text-anchor', 'middle');
+        measureText.setAttribute('dominant-baseline', 'middle');
         measureText.textContent = measure.text || 'Prevention measure';
         svg.appendChild(measureText);
         
@@ -1681,33 +1694,81 @@
       });
     });
     
-    // Draw consequences on the right
+    // Draw consequences on the right - center around hazard
     const consequences = hazard.consequences || [];
     const rightX = width - 150;
-    const consSpacing = Math.max(80, (height - 100) / Math.max(consequences.length, 1));
+    
+    // Calculate starting position to center consequences around hazard
+    const totalConsequenceHeight = (consequences.length - 1) * itemSpacing;
+    const consequenceStartY = centerY - totalConsequenceHeight / 2;
     
     consequences.forEach((consequence, i) => {
-      const consY = 100 + i * consSpacing;
+      // Position consequences centered around the hazard
+      const consY = consequenceStartY + i * itemSpacing;
       
-      // Consequence rectangle
+      // Consequence rectangle with risk-based coloring
+      // Increase height if risk information is present
+      const hasRiskInfo = consequence.risk && (consequence.risk.severityLevel || consequence.risk.likelihoodLevel);
+      const rectHeight = hasRiskInfo ? 50 : 40;
+      const rectY = hasRiskInfo ? consY - 25 : consY - 20;
+      
       const consRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
       consRect.setAttribute('x', rightX - 50);
-      consRect.setAttribute('y', consY - 20);
+      consRect.setAttribute('y', rectY);
       consRect.setAttribute('width', 100);
-      consRect.setAttribute('height', 40);
+      consRect.setAttribute('height', rectHeight);
       consRect.setAttribute('rx', 5);
-      consRect.setAttribute('fill', bowtieColors.consequence.fill);
-      consRect.setAttribute('stroke', bowtieColors.consequence.stroke);
+      
+      // Apply risk color if available
+      const riskColor = getRiskLevelColor(consequence.risk?.severityLevel, consequence.risk?.likelihoodLevel);
+      if (riskColor) {
+        consRect.setAttribute('fill', riskColor);
+        consRect.setAttribute('stroke', '#333');
+      } else {
+        consRect.setAttribute('fill', bowtieColors.consequence.fill);
+        consRect.setAttribute('stroke', bowtieColors.consequence.stroke);
+      }
       consRect.setAttribute('stroke-width', '2');
       svg.appendChild(consRect);
       
-      // Consequence text
+      // Consequence text with proper centering
       const consText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
       consText.setAttribute('x', rightX);
-      consText.setAttribute('y', consY);
+      consText.setAttribute('y', consY - 8); // Adjust vertical position for main text
       consText.setAttribute('class', 'bowtie-text');
+      consText.setAttribute('text-anchor', 'middle');
+      consText.setAttribute('dominant-baseline', 'middle');
       consText.textContent = consequence.text || `Consequence ${i + 1}`;
       svg.appendChild(consText);
+      
+      // Compact risk description below consequence
+      if (consequence.risk && (consequence.risk.severityLevel || consequence.risk.likelihoodLevel)) {
+        const riskDesc = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        riskDesc.setAttribute('x', rightX);
+        riskDesc.setAttribute('y', consY + 15);
+        riskDesc.setAttribute('class', 'bowtie-risk-text');
+        riskDesc.setAttribute('text-anchor', 'middle');
+        riskDesc.setAttribute('dominant-baseline', 'middle');
+        
+        // Format: Severity(Category)-Likelihood (e.g., "2(Asset)-B")
+        if (consequence.risk.severityLevel && consequence.risk.likelihoodLevel) {
+          const severityCategory = consequence.risk.severityCategory || 'Unknown';
+          const categoryCapitalized = severityCategory.charAt(0).toUpperCase() + severityCategory.slice(1);
+          const likelihoodDesc = state.riskMatrix.likelihood.find(l => l.id === consequence.risk.likelihoodLevel);
+          riskDesc.textContent = `${consequence.risk.severityLevel}(${categoryCapitalized})-${likelihoodDesc?.label || consequence.risk.likelihoodLevel}`;
+        } else if (consequence.risk.severityLevel) {
+          const severityCategory = consequence.risk.severityCategory || 'Unknown';
+          const categoryCapitalized = severityCategory.charAt(0).toUpperCase() + severityCategory.slice(1);
+          riskDesc.textContent = `${consequence.risk.severityLevel}(${categoryCapitalized})`;
+        } else if (consequence.risk.likelihoodLevel) {
+          const likelihoodDesc = state.riskMatrix.likelihood.find(l => l.id === consequence.risk.likelihoodLevel);
+          riskDesc.textContent = `${likelihoodDesc?.label || consequence.risk.likelihoodLevel}`;
+        } else {
+          riskDesc.textContent = 'Unrated';
+        }
+        
+        svg.appendChild(riskDesc);
+      }
       
       // Line from hazard to consequence
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -1741,6 +1802,8 @@
         measureText.setAttribute('x', measureX);
         measureText.setAttribute('y', measureY);
         measureText.setAttribute('class', 'bowtie-measure-text');
+        measureText.setAttribute('text-anchor', 'middle');
+        measureText.setAttribute('dominant-baseline', 'middle');
         measureText.textContent = measure.text || 'Mitigation measure';
         svg.appendChild(measureText);
         
@@ -1798,8 +1861,12 @@
   function wireBowtieModal() {
     const modal = document.getElementById('bowtie-modal');
     const closeBtn = modal.querySelector('.close');
+    const exportPngBtn = document.getElementById('export-bowtie-png');
+    const exportSvgBtn = document.getElementById('export-bowtie-svg');
 
     closeBtn.onclick = closeBowtieModal;
+    exportPngBtn.onclick = exportBowtieToPNG;
+    exportSvgBtn.onclick = exportBowtieToSVG;
 
     window.onclick = (event) => {
       if (event.target === modal) {
@@ -1844,6 +1911,115 @@
       state.bowtieColors = null; // Reset to defaults
       scheduleSave();
       alert('Default bow-tie colors loaded!');
+    }
+  }
+
+  // Export bowtie diagram to PNG
+  function exportBowtieToPNG() {
+    const svg = document.getElementById('bowtie-svg');
+    if (!svg) {
+      alert('No bowtie diagram to export');
+      return;
+    }
+
+    try {
+      // Get the SVG as a string
+      const svgData = new XMLSerializer().serializeToString(svg);
+      
+      // Create a canvas element
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Set canvas dimensions to match SVG viewBox
+      const viewBox = svg.getAttribute('viewBox');
+      if (viewBox) {
+        const [, , width, height] = viewBox.split(' ').map(Number);
+        canvas.width = width;
+        canvas.height = height;
+      } else {
+        canvas.width = 1000;
+        canvas.height = 600;
+      }
+      
+      // Create an image from the SVG data
+      const img = new Image();
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      
+      img.onload = () => {
+        // Fill with white background
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw the SVG image
+        ctx.drawImage(img, 0, 0);
+        
+        // Convert canvas to PNG and download
+        canvas.toBlob((blob) => {
+          const downloadUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.download = `bowtie-diagram-${new Date().toISOString().slice(0, 10)}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          
+          // Clean up URLs
+          URL.revokeObjectURL(url);
+          URL.revokeObjectURL(downloadUrl);
+        }, 'image/png');
+      };
+      
+      img.onerror = () => {
+        alert('Failed to export bowtie diagram. Please try again.');
+        URL.revokeObjectURL(url);
+      };
+      
+      img.src = url;
+      
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Failed to export bowtie diagram: ' + error.message);
+    }
+  }
+
+  // Export bowtie diagram to SVG
+  function exportBowtieToSVG() {
+    const svg = document.getElementById('bowtie-svg');
+    if (!svg) {
+      alert('No bowtie diagram to export');
+      return;
+    }
+
+    try {
+      // Clone the SVG to avoid modifying the original
+      const svgClone = svg.cloneNode(true);
+      
+      // Add namespace declaration if not present
+      if (!svgClone.getAttribute('xmlns')) {
+        svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      }
+      if (!svgClone.getAttribute('xmlns:xlink')) {
+        svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+      }
+      
+      // Get the SVG as a string
+      const svgData = new XMLSerializer().serializeToString(svgClone);
+      
+      // Create and download the SVG file
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bowtie-diagram-${new Date().toISOString().slice(0, 10)}.svg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('SVG export error:', error);
+      alert('Failed to export bowtie diagram as SVG: ' + error.message);
     }
   }
 

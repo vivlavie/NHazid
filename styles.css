@@ -506,6 +506,27 @@ input[type="text"], select, textarea {
   border-radius: 8px 8px 0 0;
 }
 
+.modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.export-button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.export-button:hover {
+  background: #0056b3;
+}
+
 .modal-header h2 {
   margin: 0;
   color: #333;
@@ -570,8 +591,6 @@ input[type="text"], select, textarea {
 .bowtie-text {
   font-family: Arial, sans-serif;
   font-size: 12px;
-  text-anchor: middle;
-  dominant-baseline: middle;
   fill: white;
   font-weight: bold;
 }
@@ -579,8 +598,6 @@ input[type="text"], select, textarea {
 .bowtie-measure-text {
   font-family: Arial, sans-serif;
   font-size: 9px;
-  text-anchor: middle;
-  dominant-baseline: middle;
   fill: #2d3436;
   font-weight: normal;
   pointer-events: none;
@@ -597,6 +614,20 @@ input[type="text"], select, textarea {
   stroke-width: 1;
   fill: none;
   stroke-dasharray: 3,3;
+}
+
+.bowtie-risk-text {
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  fill: white;
+  font-weight: bold;
+}
+
+.bowtie-risk-detail-text {
+  font-family: Arial, sans-serif;
+  font-size: 8px;
+  fill: white;
+  font-weight: normal;
 }
 
 

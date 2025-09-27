@@ -31,16 +31,7 @@
         {
           "id": "9o291gvz",
           "text": "c3",
-          "preventionMeasures": [
-            {
-              "id": "4xf6qbpm",
-              "text": "p1"
-            },
-            {
-              "id": "j40ea6b0",
-              "text": "p1"
-            }
-          ]
+          "preventionMeasures": []
         }
       ],
       "consequences": [
@@ -67,12 +58,7 @@
         {
           "id": "pr7ww188",
           "text": "q2",
-          "mitigationMeasures": [
-            {
-              "id": "ed4kbnjw",
-              "text": "m1"
-            }
-          ],
+          "mitigationMeasures": [],
           "risk": {
             "severityCategory": "",
             "severityLevel": "",
@@ -83,64 +69,70 @@
         {
           "id": "5ocdi07p",
           "text": "q3",
-          "mitigationMeasures": [
-            {
-              "id": "umv4i4b9",
-              "text": "m1"
-            },
-            {
-              "id": "bqhnutck",
-              "text": "m2"
-            }
-          ],
+          "mitigationMeasures": [],
           "risk": {
             "severityCategory": "asset",
             "severityLevel": "3",
             "likelihoodLevel": "D",
             "riskScore": "Medium"
           }
-        },
-        {
-          "id": "mzj5dtnc",
-          "text": "q4",
-          "mitigationMeasures": [
-            {
-              "id": "m01jhfz2",
-              "text": "m1"
-            }
-          ],
-          "risk": {
-            "severityCategory": "environmental",
-            "severityLevel": "4",
-            "likelihoodLevel": "C",
-            "riskScore": "Medium"
-          }
-        },
-        {
-          "id": "9nuvj2yp",
-          "text": "q5",
-          "mitigationMeasures": [
-            {
-              "id": "ep6aobcs",
-              "text": "m1"
-            },
-            {
-              "id": "bg646sqv",
-              "text": "m2"
-            }
-          ],
-          "risk": {
-            "severityCategory": "environmental",
-            "severityLevel": "4",
-            "likelihoodLevel": "",
-            "riskScore": ""
-          }
         }
       ],
       "recommendations": [
         {
           "id": "d93n0fo2",
-          "action": "",
+          "action": "Do something at first",
+          "responsible": ""
+        },
+        {
+          "id": "x1swyk42",
+          "action": "You need more action.",
+          "responsible": "Who will do the?"
+        }
+      ]
+    },
+    {
+      "id": "nlhcyajb",
+      "title": "Another hazard",
+      "description": "",
+      "causes": [
+        {
+          "id": "545b2gfz",
+          "text": "c1",
+          "preventionMeasures": [
+            {
+              "id": "nkdmzdte",
+              "text": "p1"
+            }
+          ]
+        }
+      ],
+      "consequences": [
+        {
+          "id": "w7gbxgtr",
+          "text": "q1",
+          "mitigationMeasures": [
+            {
+              "id": "nkc6d1ro",
+              "text": "m1"
+            },
+            {
+              "id": "7dcrmuct",
+              "text": "m2"
+            }
+          ],
+          "risk": {
+            "severityCategory": "environmental",
+            "severityLevel": "2",
+            "likelihoodLevel": "C",
+            "riskScore": "Low"
+          }
+        }
+      ],
+      "recommendations": [
+        {
+          "id": "wxubblio",
+          "action": "Action for haz2",
           "responsible": ""
         }
       ]
